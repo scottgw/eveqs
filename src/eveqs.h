@@ -5,7 +5,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+  // FIXME: add standard prefix to functions meant to be called
+  // more or less directly from a macro in the generated Eiffel code
   typedef uint16_t spid_t;
 
   // RTS_SRC (o) - create request group for o
@@ -23,6 +24,10 @@ extern "C" {
   // RTS_PA
   void
   processor_fresh (void *);
+
+  // RTS_CC
+  void
+  intr_call_on (spid_t client_pid, spid_t supplier_pid, void* data);
 
 #ifdef __cplusplus
 }

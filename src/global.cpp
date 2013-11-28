@@ -60,3 +60,20 @@ processor_get (spid_t pid)
 {
   return proc_list[pid].proc;
 }
+
+
+void
+intr_call_on (spid_t client_pid, spid_t supplier_pid, void* data)
+{
+  processor_t client = processor_get (client_pid);
+  processor_t supplier = processor_get (supplier_pid);
+
+  if (!supplier->has_backing_thread)
+    {
+      supplier->spawn();
+      // FIXME: add inline acquisition of private queue,
+      // locking, logging, and unlocking.
+    }
+
+  // FIXME: log call
+}

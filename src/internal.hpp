@@ -54,6 +54,7 @@ public:
 
   /* main loop */
   void application_loop();
+  void spawn();
 
   /* Request group stack operations */
   /* We have to maintain a stack of the request groups because
@@ -72,6 +73,7 @@ public:
   void wait();
 
 public:
+  bool has_backing_thread;
   qoq_t qoq;
   spid_t pid;
 private:

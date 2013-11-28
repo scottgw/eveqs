@@ -3,7 +3,8 @@
 #include "eif_macros.h"
 #include "eif_scoop.h"
 
-processor::processor(spid_t _pid) : pid(_pid)
+processor::processor(spid_t _pid) :
+  pid(_pid), has_backing_thread (false)
 {
 }
 
@@ -31,6 +32,12 @@ processor::process_priv_queue(priv_queue_t pq)
 
       eif_free_call (call);
     }
+}
+
+void
+processor::spawn()
+{
+  // FIXME: start up a thread via the eif_threads API
 }
 
 void
