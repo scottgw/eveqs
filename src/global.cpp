@@ -42,10 +42,8 @@ processor_fresh (void *obj)
   // It is legit to release the lock here because the only
   // way someone could access proc_list[id] is if we free
   // the id again.
-  proc_list[id].proc = new processor(id);
+  proc_list[id].proc = new processor(id, false, obj);
   RTS_PID(obj) = id;
-
-  //FIXME: fire up a new thread, how?
 }
 
 void

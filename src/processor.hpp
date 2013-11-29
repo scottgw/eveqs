@@ -11,7 +11,9 @@ typedef tbb::concurrent_bounded_queue <void*> notifier_t;
 class processor
 {
 public:
-  processor(spid_t);
+  processor(spid_t _pid,
+            bool _has_backing_thread = false,
+            void* _parent_obj = NULL);
   priv_queue_t find_queue_for(processor_t);
 
   /* main loop */
@@ -40,6 +42,7 @@ public:
   spid_t pid;
 
 private:
+  void* parent_obj;
   notifier_t notifier;
   void process_priv_queue(priv_queue_t);
 
