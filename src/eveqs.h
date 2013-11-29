@@ -5,29 +5,44 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  // FIXME: add standard prefix to functions meant to be called
-  // more or less directly from a macro in the generated Eiffel code
   typedef uint16_t spid_t;
 
-  // RTS_SRC (o) - create request group for o
+
+  // 
+  // Request chain operations
+  //
+
+  // RTS_RC (o) - create request group for o
   void
-  req_grp_new (spid_t client_pid);
+  eveqs_req_grp_new (spid_t client_pid);
+
+  // RTS_RD (o) - delete chain (release locks?)
+
+  // RTS_RF (o) - wait condition fails
 
   // RTS_RS (c, s) - add supplier s to current group for c
   void
-  req_grp_add_supplier (spid_t client_pid, spid_t supplier_pid);
+  eveqs_req_grp_add_supplier (spid_t client_pid, spid_t supplier_pid);
 
   // RTS_RW (o) - sort all suppliers in the group and get exclusive access
   void
-  req_grp_lock (spid_t client_pid);
+  eveqs_req_grp_lock (spid_t client_pid);
+
+  //
+  // Processor creation
+  //
 
   // RTS_PA
   void
-  processor_fresh (void *);
+  eveqs_processor_fresh (void *);
 
-  // RTS_CC
+  //
+  // Call logging
+  //
+
+  // eif_log_call
   void
-  intr_call_on (spid_t client_pid, spid_t supplier_pid, void* data);
+  eveqs_call_on (spid_t client_pid, spid_t supplier_pid, void* data);
 
 #ifdef __cplusplus
 }

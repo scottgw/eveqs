@@ -2,6 +2,7 @@
 #include <mutex>
 #include "eveqs.h"
 #include "internal.hpp"
+#include "processor.hpp"
 #include "eif_macros.h"
 
 #define MAX_PROCS 1024
@@ -63,7 +64,7 @@ processor_get (spid_t pid)
 
 
 void
-intr_call_on (spid_t client_pid, spid_t supplier_pid, void* data)
+call_on (spid_t client_pid, spid_t supplier_pid, void* data)
 {
   processor_t client = processor_get (client_pid);
   processor_t supplier = processor_get (supplier_pid);

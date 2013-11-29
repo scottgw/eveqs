@@ -1,6 +1,7 @@
 #include <algorithm>
 #include "eveqs.h"
-#include "internal.hpp"
+#include "req_grp.hpp"
+#include "processor.hpp"
 
 req_grp::req_grp() : vector<priv_queue_t> ()
 {
@@ -43,29 +44,4 @@ req_grp::unlock()
     {
       (*it)->lock();
     }
-}
-
-extern "C"
-void
-req_grp_new (spid_t client_pid)
-{
-  processor_t client = processor_get (client_pid);
-  client->push_new_req_grp();
-}
-
-extern "C"
-void
-req_grp_add_supplier (spid_t client_pid, spid_t supplier_pid)
-{
-  processor_t client = processor_get (client_pid);
-  processor_t supplier = processor_get (supplier_pid);  
-  client->add_to_req_grp (supplier);
-}
-
-extern "C"
-void
-req_grp_lock (spid_t client_pid)
-{
-  processor_t client = processor_get (client_pid);
-  client->lock_req_grp();
 }

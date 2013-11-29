@@ -1,4 +1,7 @@
+#include "eveqs.h"
 #include "internal.hpp"
+#include "processor.hpp"
+#include "private_queue.hpp"
 #include "eif_macros.h"
 #include "eif_scoop.h"
 

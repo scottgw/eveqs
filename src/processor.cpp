@@ -1,5 +1,7 @@
 #include "eveqs.h"
 #include "internal.hpp"
+#include "processor.hpp"
+#include "eif_threads.h"
 #include "eif_macros.h"
 #include "eif_scoop.h"
 
@@ -34,10 +36,24 @@ processor::process_priv_queue(priv_queue_t pq)
     }
 }
 
+
+static
+void
+spawn_main(void* data)
+{
+  printf("spawn_main: \n");
+}
+
+
 void
 processor::spawn()
 {
-  // FIXME: start up a thread via the eif_threads API
+  eif_thr_create_with_attr_new (NULL, // No root object, if this is only
+                                      // passed to spawn_main this is OK
+                                spawn_main,
+                                pid, // Logical PID
+                                EIF_TRUE, // We are a processor
+                                NULL); // There are no attributes
 }
 
 void

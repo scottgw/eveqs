@@ -1,12 +1,17 @@
 lib_LTLIBRARIES = libeveqs.la
 
 libeveqs_la_SOURCES = \
+	eveqs.cpp \
 	global.cpp \
+	global.hpp \
 	internal.hpp \
 	private_queue.cpp \
+	private_queue.hpp \
 	processor.cpp \
+	processor.hpp \
 	qoq.cpp \
-	req_grp.cpp
+	req_grp.cpp \
+	req_grp.hpp
 
 BUILT_SOURCES = config.h
 
