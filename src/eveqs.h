@@ -17,6 +17,8 @@ extern "C" {
   eveqs_req_grp_new (spid_t client_pid);
 
   // RTS_RD (o) - delete chain (release locks?)
+  void
+  eveqs_req_grp_delete (spid_t client_pid);
 
   // RTS_RF (o) - wait condition fails
 

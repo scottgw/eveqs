@@ -13,7 +13,12 @@ extern "C"
   }
 
   // RTS_RD (o) - delete chain (release locks?)
-
+  void
+  eveqs_req_grp_delete (spid_t client_pid)
+  {
+    processor_t client = processor_get (client_pid);
+    client->unlock_req_grp();
+  }
 
   // RTS_RF (o) - wait condition fails
 
@@ -42,7 +47,10 @@ extern "C"
 
   // RTS_PA
   void
-  eveqs_processor_fresh (void *);
+  eveqs_processor_fresh (void *obj)
+  {
+    processor_fresh (obj);
+  }
 
   //
   // Call logging
@@ -50,5 +58,10 @@ extern "C"
 
   // eif_log_call
   void
-  eveqs_call_on (spid_t client_pid, spid_t supplier_pid, void* data);
+  eveqs_call_on (spid_t client_pid, spid_t supplier_pid, void* data)
+  {
+    // FIXME: do as before and get both the client and supplier and turn into
+    // a proper call on the client?
+    call_on (client_pid, supplier_pid, data);
+  }
 }
