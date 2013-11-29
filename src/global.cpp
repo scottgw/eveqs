@@ -73,13 +73,19 @@ call_on (spid_t client_pid, spid_t supplier_pid, void* data)
 {
   processor_t client = processor_get (client_pid);
   processor_t supplier = processor_get (supplier_pid);
+  priv_queue_t pq = client->find_queue_for (supplier);
 
   if (!supplier->has_backing_thread)
     {
       supplier->spawn();
-      // FIXME: add inline acquisition of private queue,
-      // locking, logging, and unlocking.
-    }
+      supplier->has_backing_thread = true;
 
-  // FIXME: log call
+      pq->lock();
+      pq->log_call (data);
+      pq->unlock();
+    }
+  else
+    {
+      pq->log_call (data);
+    }
 }
