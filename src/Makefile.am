@@ -19,7 +19,7 @@ BUILT_SOURCES = config.h
 # undef the $(includedir).
 pkginclude_HEADERS = eveqs.h
 
-FLAGS = -pthread -U_FORTIFY_SOURCE -DENABLE_LOG \
+FLAGS = -pthread -g \
 	-I${ISE_EIFFEL}/studio/spec/${ISE_PLATFORM}/include
 	-Wall -Wno-unused-value -Wno-unused-variable -Werror -march=native
 libeveqs_la_CFLAGS = -std=gnu99 $(FLAGS) $(DEPS_CFLAGS)
