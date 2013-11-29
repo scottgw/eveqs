@@ -23,6 +23,8 @@ processor_init()
 {
   proc_list = (proc_or_free_id*) malloc (MAX_PROCS * sizeof(proc_or_free_id));
 
+  proc_list[0].proc = new processor(0);
+
   for (int i = 1; i < MAX_PROCS; i++)
     {
       proc_list[i].next_free_id = (i + 1) % MAX_PROCS;
@@ -32,6 +34,11 @@ processor_init()
 void
 processor_fresh (void *obj)
 {
+  if (proc_list == 0)
+    {
+      processor_init();
+    }
+
   spid_t id;
   {
     std::lock_guard <std::mutex> lock (mutex);
