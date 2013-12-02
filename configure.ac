@@ -12,6 +12,8 @@ AC_PROG_CXX
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_FILES([Makefile src/Makefile])
 
-PKG_CHECK_MODULES([DEPS], [glib-2.0 >= 2.20, ck, tbb])
+PKG_CHECK_MODULES([DEPS], [tbb])
+
+AC_CONFIG_FILES([libeveqs.pc])
 
 AC_OUTPUT

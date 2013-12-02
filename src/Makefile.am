@@ -15,9 +15,7 @@ libeveqs_la_SOURCES = \
 
 BUILT_SOURCES = config.h
 
-# we use pkginclude because it'll put these in a separate directory
-# undef the $(includedir).
-pkginclude_HEADERS = eveqs.h
+include_HEADERS = eveqs.h
 
 FLAGS = -pthread -g \
 	-I${ISE_EIFFEL}/studio/spec/${ISE_PLATFORM}/include
