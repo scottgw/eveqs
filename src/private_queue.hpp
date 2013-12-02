@@ -19,6 +19,7 @@ public:
   void log_call(void*);
   void unlock();
 
+  bool synced;
   priv_queue_inner q;
 };
 

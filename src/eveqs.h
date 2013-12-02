@@ -46,6 +46,19 @@ extern "C" {
   void
   eveqs_call_on (spid_t client_pid, spid_t supplier_pid, void* data);
 
+  int
+  eveqs_is_synced_on (spid_t client_pid, spid_t supplier_pid);
+
+  //
+  // Callback from garbage collector to indicate that the
+  // processor isn't used anymore.
+  //
+  void
+  eveqs_unmarked(spid_t pid);
+
+  void
+  eveqs_enumerate_live ();
+
 #ifdef __cplusplus
 }
 #endif

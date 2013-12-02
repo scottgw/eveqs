@@ -1,9 +1,13 @@
-#include <stdlib.h>
-#include <mutex>
+#include "eif_macros.h"
+#include "eif_scoop.h"
 #include "eveqs.h"
 #include "internal.hpp"
 #include "processor.hpp"
-#include "eif_macros.h"
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <stdlib.h>
+#include <tbb/concurrent_hash_map.h>
 
 #define MAX_PROCS 1024
 
@@ -14,6 +18,16 @@ union proc_or_free_id {
 
 std::mutex mutex;
 proc_or_free_id *proc_list = 0;
+
+
+bool all_done = false;
+std::mutex all_done_mutex;
+std::condition_variable all_done_cv;
+
+
+typedef tbb::concurrent_hash_map <spid_t, bool> pid_set_t;
+
+pid_set_t used_pid_set;
 
 // Start at 1 because it is for root (I believe)
 spid_t free_id = 1;
@@ -29,6 +43,11 @@ processor_init()
     {
       proc_list[i].next_free_id = (i + 1) % MAX_PROCS;
     }
+
+  {
+    pid_set_t::const_accessor result;
+    used_pid_set.insert(result, 0);
+  }
 }
 
 void
@@ -46,6 +65,11 @@ processor_fresh (void *obj)
     free_id = proc_list[id].next_free_id;
   }
 
+  {
+    pid_set_t::const_accessor result;
+    used_pid_set.insert(result, id);
+  }
+
   // It is legit to release the lock here because the only
   // way someone could access proc_list[id] is if we free
   // the id again.
@@ -56,9 +80,35 @@ processor_fresh (void *obj)
 void
 processor_free_id (processor_t proc)
 {
-  std::lock_guard <std::mutex> lock (mutex);
-  proc_list[proc->pid].next_free_id = free_id;
-  free_id = proc->pid;
+  spid_t pid = proc->pid;
+  {
+    std::lock_guard <std::mutex> lock (mutex);
+    proc_list[pid].next_free_id = free_id;
+    free_id = pid;
+  }
+
+  used_pid_set.erase(pid);
+
+  if (used_pid_set.size() == 1)
+    {
+      std::unique_lock<std::mutex> lock(all_done_mutex);
+      all_done = true;
+      all_done_cv.notify_one();
+    }
+}
+
+void
+processor_enumerate_live ()
+{
+  // printf("[info] enumerate live\n");
+  for (int i = 0; i < MAX_PROCS; i++)
+    {
+      if (used_pid_set.count (i) == 1)
+        {
+          // printf("[info] enumerate live: marking %d\n", i);s
+          eif_mark_live_pid (i);
+        }
+    }
 }
 
 processor_t
@@ -88,4 +138,22 @@ call_on (spid_t client_pid, spid_t supplier_pid, void* data)
     {
       pq->log_call (data);
     }
+}
+
+void
+processor_wait_for_all()
+{
+  processor_t root_proc = processor_get(0);
+  root_proc->application_loop();
+
+  while(!all_done)
+    {
+      std::unique_lock<std::mutex> lock(all_done_mutex);
+      all_done_cv.wait_for(lock,
+                           std::chrono::milliseconds(200),
+                           []{return all_done;});
+      RTGC;
+      printf("GC waiting loop\n");
+    }
+  printf("processor_wait_for_all\n");
 }

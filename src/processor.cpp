@@ -81,14 +81,21 @@ processor::application_loop()
     {
       priv_queue_t pq;
 
-      // Indicating that we're blocking.
       eif_exit_eiffel_code();
       qoq.pop(pq);
       eif_enter_eiffel_code();
-      // Unblock!
 
-      process_priv_queue (pq);
+      if (pq)
+        {
+          process_priv_queue (pq);
+        }
+      else
+        {
+          break;
+        }
     }
+
+  printf("processor::application_loop freeing\n");
   processor_free_id (this);
 }
 
@@ -109,6 +116,12 @@ processor::find_queue_for(processor_t supplier)
 }
 
 void
+processor::shutdown()
+{
+  qoq.push(NULL);
+}
+
+void
 processor::lock_req_grp()
 {
   req_grp_stack.top ().lock();
@@ -123,7 +136,7 @@ processor::add_to_req_grp (processor_t supplier)
 void
 processor::push_new_req_grp ()
 {
-  req_grp_stack.emplace ();
+  req_grp_stack.push (req_grp());
 }
 
 void
@@ -149,5 +162,7 @@ void
 processor::wait()
 {
   void* dummy;
+  EIF_ENTER_C;
   notifier.pop (dummy);
+  EIF_EXIT_C;
 }

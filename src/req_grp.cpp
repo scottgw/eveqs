@@ -40,8 +40,8 @@ void
 req_grp::unlock()
 {
   // Unlock in the opposite order that they were locked
-  for (auto it = this->rbegin(); it != this->rend(); ++it)
+  for (auto it = rbegin(); it != rend(); ++it)
     {
-      (*it)->lock();
+      (*it)->unlock();
     }
 }

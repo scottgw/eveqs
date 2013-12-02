@@ -10,8 +10,14 @@ void
 processor_fresh (void *obj);
 
 void
+processor_enumerate_live ();
+
+void
 processor_free_id (processor_t proc);
 
 void
 call_on (spid_t client_pid, spid_t supplier_pid, void* data);
 #endif // _GLOBAL_H
+
+void
+processor_wait_for_all();

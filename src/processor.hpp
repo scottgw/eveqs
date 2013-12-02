@@ -19,6 +19,7 @@ public:
   /* main loop */
   void application_loop();
   void spawn();
+  void shutdown();
 
   /* Request group stack operations */
   /* We have to maintain a stack of the request groups because

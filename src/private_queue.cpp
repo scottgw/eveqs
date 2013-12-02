@@ -10,6 +10,7 @@
 priv_queue::priv_queue (processor_t _client, processor_t _supplier) :
   client (_client), supplier (_supplier), q()
 {
+  synced = false;
   q.set_capacity (PRIV_QUEUE_CAPACITY);
 }
 
@@ -28,6 +29,11 @@ priv_queue::log_call(void *data)
   if (call_data_sync_pid (call) != NULL_PROCESSOR_ID)
     {
       client->wait();
+      synced = true;
+    }
+  else
+    {
+      synced = false;
     }
 }
 

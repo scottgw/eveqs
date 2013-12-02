@@ -17,7 +17,7 @@ extern "C"
   eveqs_req_grp_delete (spid_t client_pid)
   {
     processor_t client = processor_get (client_pid);
-    client->unlock_req_grp();
+    client->pop_req_grp();
   }
 
   // RTS_RF (o) - wait condition fails
@@ -64,4 +64,45 @@ extern "C"
     // a proper call on the client?
     call_on (client_pid, supplier_pid, data);
   }
+
+  int
+  eveqs_is_synced_on (spid_t client_pid, spid_t supplier_pid)
+  {
+    processor_t client = processor_get (client_pid);
+    processor_t supplier = processor_get (supplier_pid);  
+
+    priv_queue_t pq = client->find_queue_for (supplier);
+    return pq->synced;
+  }
+
+  //
+  // Callback from garbage collector to indicate that the
+  // processor isn't used anymore.
+  //
+  void
+  eveqs_unmarked(spid_t pid)
+  {
+    processor_t proc = processor_get (pid);
+    printf("[info] eveqs_unmarked\n");
+
+    proc->shutdown();
+
+    // if (pid == 0)
+    //   {
+    //     processor_free_id (proc);
+    //   }
+  }
+
+  void
+  eveqs_enumerate_live()
+  {
+    processor_enumerate_live();
+  }
+
+  void
+  eveqs_wait_for_all()
+  {
+    // processor_wait_for_all();
+  }
+
 }
