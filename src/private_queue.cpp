@@ -21,20 +21,24 @@ priv_queue::lock()
 }
 
 void
+priv_queue::register_wait()
+{
+  supplier->register_wait(client);
+}
+
+void
 priv_queue::log_call(void *data)
 {
   call_data *call = (call_data*) data;
+  bool will_sync = call_data_sync_pid (call) != NULL_PROCESSOR_ID;
   q.push (call);
 
-  if (call_data_sync_pid (call) != NULL_PROCESSOR_ID)
+  if (will_sync)
     {
       client->wait();
-      synced = true;
     }
-  else
-    {
-      synced = false;
-    }
+
+  synced = will_sync;
 }
 
 void

@@ -21,6 +21,8 @@ extern "C" {
   eveqs_req_grp_delete (spid_t client_pid);
 
   // RTS_RF (o) - wait condition fails
+  void
+  eveqs_req_grp_wait (spid_t client_pid);
 
   // RTS_RS (c, s) - add supplier s to current group for c
   void

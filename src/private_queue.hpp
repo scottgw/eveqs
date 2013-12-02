@@ -17,6 +17,7 @@ public:
   
   void lock();
   void log_call(void*);
+  void register_wait();
   void unlock();
 
   bool synced;

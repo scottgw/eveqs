@@ -75,6 +75,35 @@ processor::spawn()
 }
 
 void
+processor::register_wait(processor_t proc)
+{
+  waiters.push(proc);
+}
+
+void
+processor::notify_next(processor_t current_client)
+{
+  processor_t waiter;
+
+  waiters.pop(waiter);
+
+  if (waiter == current_client)
+    {
+      // If the waiters is now empty then we don't want to
+      // push the current_client only to pop and wake it.
+      if (waiters.size() == 0)
+        {
+          return;
+        }
+
+      waiters.push(waiter);
+    }
+
+  waiters.pop(waiter);
+  waiter->wake();
+}
+
+void
 processor::application_loop()
 {
   for (;;)
@@ -93,6 +122,8 @@ processor::application_loop()
         {
           break;
         }
+
+      notify_next(pq->client);
     }
 
   printf("processor::application_loop freeing\n");
@@ -119,37 +150,6 @@ void
 processor::shutdown()
 {
   qoq.push(NULL);
-}
-
-void
-processor::lock_req_grp()
-{
-  req_grp_stack.top ().lock();
-}
-
-void
-processor::add_to_req_grp (processor_t supplier)
-{
-  req_grp_stack.top ().add(this, supplier);
-}
-
-void
-processor::push_new_req_grp ()
-{
-  req_grp_stack.push (req_grp());
-}
-
-void
-processor::unlock_req_grp()
-{
-  req_grp_stack.top ().unlock();
-}
-
-void
-processor::pop_req_grp()
-{
-  unlock_req_grp();
-  req_grp_stack.pop();
 }
 
 void

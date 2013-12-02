@@ -3,16 +3,31 @@
 #include "req_grp.hpp"
 #include "processor.hpp"
 
-req_grp::req_grp() : vector<priv_queue_t> ()
+req_grp::req_grp(processor_t _client) :
+  vector<priv_queue_t> (),
+  client (_client),
+  sorted (false)
 {
-  sorted = false;
 }
 
 void
-req_grp::add(processor_t client, processor_t supplier)
+req_grp::add(processor_t supplier)
 {
   priv_queue_t pq = client->find_queue_for (supplier);
   push_back (pq);
+}
+
+void
+req_grp::wait()
+{
+  for (auto &pq : *this)
+    {
+      pq->register_wait();
+    }
+
+  unlock();
+
+  client->wait();
 }
 
 void
