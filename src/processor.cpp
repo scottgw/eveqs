@@ -85,22 +85,33 @@ processor::notify_next(processor_t current_client)
 {
   processor_t waiter;
 
-  waiters.pop(waiter);
-
-  if (waiter == current_client)
+  if (waiters.try_pop(waiter))
     {
-      // If the waiters is now empty then we don't want to
-      // push the current_client only to pop and wake it.
-      if (waiters.size() == 0)
+      if (waiter == current_client)
         {
-          return;
+          printf("Looking for another waiter than %d\n", current_client->pid);
+          waiters.push(waiter);
+
+          // If the current_client is the only waiter,
+          // we're done
+          if (waiters.size() == 1)
+            {
+              return;
+            }
+
+          if (waiters.try_pop(waiter))
+            {
+              printf("Waking waiter second %d\n", waiter->pid);
+              waiter->wake();
+              return;
+            }
         }
-
-      waiters.push(waiter);
+      else
+        {
+          printf("Waking waiter %d\n", waiter->pid);
+          waiter->wake();
+        }
     }
-
-  waiters.pop(waiter);
-  waiter->wake();
 }
 
 void
@@ -116,14 +127,15 @@ processor::application_loop()
 
       if (pq)
         {
+          printf("Processing queue for %d\n", pq->client->pid);
           process_priv_queue (pq);
+          notify_next (pq->client);
         }
       else
         {
           break;
         }
 
-      notify_next(pq->client);
     }
 
   printf("processor::application_loop freeing\n");
