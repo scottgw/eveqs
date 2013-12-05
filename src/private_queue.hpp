@@ -19,10 +19,10 @@ public:
   void log_call(void*);
   void register_wait();
   void unlock();
-  void spsc_push (call_data *data);
+  void spsc_push (call_data*);
   void pop(call_data* &data)
   {
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < 128; i++)
       {
         if (q.dequeue(data))
           {
@@ -34,7 +34,7 @@ public:
       {
         EIF_ENTER_C;
         std::unique_lock<std::mutex> lock (mutex);
-        cv.wait_for(lock, std::chrono::milliseconds(100));
+        cv.wait(lock);
         EIF_EXIT_C;
         RTGC;
       }

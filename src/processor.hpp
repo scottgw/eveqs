@@ -1,14 +1,19 @@
 #ifndef _PROCESSOR_H
 #define _PROCESSOR_H
+#include <memory>
 #include <stack>
 #include <mutex>
 #include <condition_variable>
 #include <unordered_map>
+#include "qoq.hpp"
 #include "eif_queue.hpp"
 #include "private_queue.hpp"
 #include "req_grp.hpp"
 
-typedef tbb::concurrent_bounded_queue <priv_queue_t*> qoq_t;
+// typedef tbb::tbb_allocator<mpscq_node_t> node_allocator_t;
+typedef std::allocator<mpscq_node_t> node_allocator_t;
+typedef mpscq_t qoq_t;
+// typedef tbb::concurrent_bounded_queue <priv_queue_t*> qoq_t;
 typedef tbb::concurrent_bounded_queue <processor_t*> waiters_t;
 // FIXME: create a new class for the below typedef with 
 // more explicit operations.
@@ -56,13 +61,21 @@ public:
   qoq_t qoq;
   spid_t pid;
   std::stack <req_grp> group_stack;
+  void qoq_push(void *val);
+  void deallocate(mpscq_node_t *node);
+
+private:
+  void qoq_pop(priv_queue * &pq);
+  std::mutex qoq_mutex;
+  std::condition_variable qoq_cv;
+  mpscq_node_t *stub;
+  node_allocator_t node_allocator;
 
 private:
   void* parent_obj;
   notifier_t notifier;
   waiters_t waiters;
   void process_priv_queue(priv_queue_t*);
-
   std::unordered_map <processor_t*, priv_queue_t*> queue_cache;
 };
 

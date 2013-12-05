@@ -26,7 +26,7 @@ priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
 void
 priv_queue::lock()
 {
-  eif_push (supplier->qoq, this);
+  supplier->qoq_push(this);
   synced = false;
 }
 

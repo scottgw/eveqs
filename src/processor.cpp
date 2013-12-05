@@ -17,8 +17,10 @@ processor::processor(spid_t _pid,
                      void* _parent_obj) :
   pid(_pid), has_backing_thread (_has_backing_thread), parent_obj (_parent_obj)
 {
-  qoq.set_capacity(1024);
+  // qoq.set_capacity(1024);
   last_waiter = NULL;
+  stub = node_allocator.allocate(1);
+  mpscq_create (&qoq, stub);
 }
 
 void
@@ -113,7 +115,7 @@ processor::application_loop()
       priv_queue_t *pq;
 
       // printf("%d waiting on qoq\n", pid);
-      eif_pop(qoq, pq);
+      qoq_pop(pq);
 
       if (pq)
         {
@@ -130,6 +132,56 @@ processor::application_loop()
 
   // printf("processor::application_loop freeing\n");
   processor_free_id (this);
+}
+
+void
+processor::deallocate(mpscq_node_t *node)
+{
+  node_allocator.deallocate(node, 1);
+}
+
+void
+processor::qoq_push(void *val)
+{
+  mpscq_node_t * node = node_allocator.allocate(1);
+  node->state = val;
+
+  mpscq_push(&qoq, node);
+
+  {
+    std::unique_lock<std::mutex> lock(qoq_mutex);
+    qoq_cv.notify_one();
+  }
+}
+
+void
+processor::qoq_pop(priv_queue * &pq)
+{
+  mpscq_node_t *node;
+
+  for (int i = 0; i < 128; i++)
+    {
+      if ((node = mpscq_pop(&qoq)) != 0)
+        {
+          pq = (priv_queue *) node->state;
+          pq->client->deallocate(node);
+          return;
+        }
+    }
+
+  while ((node = mpscq_pop(&qoq)) == 0)
+    {
+      EIF_ENTER_C;
+      {
+        std::unique_lock<std::mutex> lock(qoq_mutex);
+        qoq_cv.wait(lock);
+      }
+      EIF_EXIT_C;
+      RTGC;
+    }
+
+  pq = (priv_queue *) node->state;
+  pq->client->deallocate (node);
 }
 
 priv_queue_t*
@@ -151,8 +203,7 @@ processor::find_queue_for(processor_t *supplier)
 void
 processor::shutdown()
 {
-  priv_queue_t *dummy = NULL;
-  eif_push(qoq, dummy);
+  qoq_push (NULL);
 }
 
 void

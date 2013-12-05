@@ -1,9 +1,10 @@
 #ifndef _EIF_QUEUE_H
 #define _EIF_QUEUE_H
 #include <tbb/concurrent_queue.h>
+#include "qoq.hpp"
 #include "eif_macros.h"
 
-#define SPIN 4
+#define SPIN 64
 
 template <class V>
 void

@@ -42,7 +42,7 @@ T load_consume(T const* addr)
 { 
   // hardware fence is implicit on x86 
   T v = *const_cast<T const volatile*>(addr); 
-  __memory_barrier(); // compiler fence 
+  // __memory_barrier(); // compiler fence 
   return v; 
 } 
 
@@ -51,7 +51,7 @@ template<typename T>
 void store_release(T* addr, T v) 
 { 
   // hardware fence is implicit on x86 
-  __memory_barrier(); // compiler fence 
+  // __memory_barrier(); // compiler fence 
   *const_cast<T volatile*>(addr) = v; 
 } 
 
