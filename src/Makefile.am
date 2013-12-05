@@ -1,6 +1,7 @@
 lib_LTLIBRARIES = libeveqs.la
 
 libeveqs_la_SOURCES = \
+	eif_queue.hpp \
 	eveqs.cpp \
 	global.cpp \
 	global.hpp \
@@ -11,13 +12,14 @@ libeveqs_la_SOURCES = \
 	processor.hpp \
 	qoq.cpp \
 	req_grp.cpp \
-	req_grp.hpp
+	req_grp.hpp \
+	spsc_queue.hpp
 
 BUILT_SOURCES = config.h
 
 include_HEADERS = eveqs.h
 
-FLAGS = -pthread -g \
+FLAGS = -pthread -g -rdynamic \
 	-I${ISE_EIFFEL}/studio/spec/${ISE_PLATFORM}/include
 	-Wall -Wno-unused-value -Wno-unused-variable -Werror -march=native
 libeveqs_la_CFLAGS = -std=gnu99 $(FLAGS) $(DEPS_CFLAGS)

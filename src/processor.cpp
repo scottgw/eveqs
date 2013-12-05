@@ -5,30 +5,31 @@
 #include "internal.hpp"
 #include "global.hpp"
 #include "processor.hpp"
+#include "private_queue.hpp"
 #include "eif_posix_threads.h"
 #include "eif_threads.h"
 #include "eif_macros.h"
 #include "eif_scoop.h"
+
 
 processor::processor(spid_t _pid,
                      bool _has_backing_thread,
                      void* _parent_obj) :
   pid(_pid), has_backing_thread (_has_backing_thread), parent_obj (_parent_obj)
 {
+  qoq.set_capacity(1024);
+  last_waiter = NULL;
 }
 
 void
-processor::process_priv_queue(priv_queue_t pq)
+processor::process_priv_queue(priv_queue_t *pq)
 {
   for (;;)
     {
       call_data *call;
 
-      // As we block we indicate that we're doing so
-      eif_exit_eiffel_code();
-      pq->q.pop((void *&)call);
-      eif_enter_eiffel_code();
-      // Unblock!
+      // printf("%d waiting on priv queue for %d\n", pid, pq->client->pid);
+      pq->pop(call);
 
       if (call == NULL)
         {
@@ -57,7 +58,7 @@ spawn_main(char* data, ...)
   spid_t pid = (spid_t)va_arg(ap, int);
   va_end (ap);
 
-  processor_t proc = processor_get(pid);
+  processor_t *proc = processor_get(pid);
 
   proc->application_loop();
 }
@@ -75,43 +76,33 @@ processor::spawn()
 }
 
 void
-processor::register_wait(processor_t proc)
-{
-  waiters.push(proc);
+processor::register_wait(processor_t *proc)
+{ 
+  EIF_ENTER_C;
+  {
+    std::unique_lock<std::mutex> lock (notify_mutex);
+    // printf("%d waiting on %d\n", proc->pid, pid);
+    while (proc == this->last_waiter)
+      {
+        notify_cv.wait (lock);
+      }
+  }
+  EIF_EXIT_C;
+  // RTGC;
+  // printf("%d waking from %d\n", proc->pid, pid);
 }
 
 void
-processor::notify_next(processor_t current_client)
+processor::notify_next(processor_t *current_client)
 {
-  processor_t waiter;
-
-  if (waiters.try_pop(waiter))
-    {
-      if (waiter == current_client)
-        {
-          printf("Looking for another waiter than %d\n", current_client->pid);
-          waiters.push(waiter);
-
-          // If the current_client is the only waiter,
-          // we're done
-          if (waiters.size() == 1)
-            {
-              return;
-            }
-
-          if (waiters.try_pop(waiter))
-            {
-              printf("Waking waiter second %d\n", waiter->pid);
-              waiter->wake();
-              return;
-            }
-        }
-      else
-        {
-          printf("Waking waiter %d\n", waiter->pid);
-          waiter->wake();
-        }
-    }
+  EIF_ENTER_C;
+  {
+    std::unique_lock<std::mutex> lock (notify_mutex);
+    last_waiter = current_client;
+    notify_cv.notify_all();
+  }
+  EIF_EXIT_C;
+  // RTGC;
 }
 
 void
@@ -119,15 +110,14 @@ processor::application_loop()
 {
   for (;;)
     {
-      priv_queue_t pq;
+      priv_queue_t *pq;
 
-      eif_exit_eiffel_code();
-      qoq.pop(pq);
-      eif_enter_eiffel_code();
+      // printf("%d waiting on qoq\n", pid);
+      eif_pop(qoq, pq);
 
       if (pq)
         {
-          printf("Processing queue for %d\n", pq->client->pid);
+          // printf("%d processing queue for %d\n", pid, pq->client->pid);
           process_priv_queue (pq);
           notify_next (pq->client);
         }
@@ -138,17 +128,17 @@ processor::application_loop()
 
     }
 
-  printf("processor::application_loop freeing\n");
+  // printf("processor::application_loop freeing\n");
   processor_free_id (this);
 }
 
-priv_queue_t
-processor::find_queue_for(processor_t supplier)
+priv_queue_t*
+processor::find_queue_for(processor_t *supplier)
 {
   auto queue_maybe = queue_cache.find (supplier);
   if (queue_maybe == queue_cache.end())
     {
-      priv_queue_t pq = new priv_queue (this, supplier);
+      priv_queue_t *pq = new priv_queue (this, supplier);
       queue_cache[supplier] = pq;
       return pq;
     }
@@ -161,20 +151,20 @@ processor::find_queue_for(processor_t supplier)
 void
 processor::shutdown()
 {
-  qoq.push(NULL);
+  priv_queue_t *dummy = NULL;
+  eif_push(qoq, dummy);
 }
 
 void
 processor::wake()
 {
-  notifier.push(NULL);
+  processor_t *dummy = NULL;
+  eif_push(notifier, dummy);
 }
 
 void
 processor::wait()
 {
-  void* dummy;
-  EIF_ENTER_C;
-  notifier.pop (dummy);
-  EIF_EXIT_C;
+  processor_t *dummy;
+  eif_pop(notifier, dummy);
 }

@@ -8,7 +8,7 @@ extern "C"
   void
   eveqs_req_grp_new (spid_t client_pid)
   {
-    processor_t client = processor_get (client_pid);
+    processor_t *client = processor_get (client_pid);
     client->group_stack.push(req_grp(client));
   }
 
@@ -16,7 +16,7 @@ extern "C"
   void
   eveqs_req_grp_delete (spid_t client_pid)
   {
-    processor_t client = processor_get (client_pid);
+    processor_t *client = processor_get (client_pid);
     client->group_stack.top().unlock();
     client->group_stack.pop();
   }
@@ -25,7 +25,7 @@ extern "C"
   void
   eveqs_req_grp_wait (spid_t client_pid)
   {
-    processor_t client = processor_get (client_pid);
+    processor_t *client = processor_get (client_pid);
     client->group_stack.top().wait();
   }
 
@@ -33,8 +33,8 @@ extern "C"
   void
   eveqs_req_grp_add_supplier (spid_t client_pid, spid_t supplier_pid)
   {
-    processor_t client = processor_get (client_pid);
-    processor_t supplier = processor_get (supplier_pid);  
+    processor_t *client = processor_get (client_pid);
+    processor_t *supplier = processor_get (supplier_pid);  
     client->group_stack.top().add (supplier);
   }
 
@@ -42,7 +42,7 @@ extern "C"
   void
   eveqs_req_grp_lock (spid_t client_pid)
   {
-    processor_t client = processor_get (client_pid);
+    processor_t *client = processor_get (client_pid);
     client->group_stack.top().lock();
   }
 
@@ -73,10 +73,10 @@ extern "C"
   int
   eveqs_is_synced_on (spid_t client_pid, spid_t supplier_pid)
   {
-    processor_t client = processor_get (client_pid);
-    processor_t supplier = processor_get (supplier_pid);  
+    processor_t *client = processor_get (client_pid);
+    processor_t *supplier = processor_get (supplier_pid);  
 
-    priv_queue_t pq = client->find_queue_for (supplier);
+    priv_queue_t *pq = client->find_queue_for (supplier);
     return pq->synced;
   }
 
@@ -87,7 +87,7 @@ extern "C"
   void
   eveqs_unmarked(spid_t pid)
   {
-    processor_t proc = processor_get (pid);
+    processor_t *proc = processor_get (pid);
     printf("[info] eveqs_unmarked\n");
 
     proc->shutdown();

@@ -1,13 +1,18 @@
 #ifndef _PROCESSOR_H
 #define _PROCESSOR_H
 #include <stack>
+#include <mutex>
+#include <condition_variable>
 #include <unordered_map>
+#include "eif_queue.hpp"
 #include "private_queue.hpp"
 #include "req_grp.hpp"
 
-typedef tbb::concurrent_bounded_queue <priv_queue_t> qoq_t;
-typedef tbb::concurrent_bounded_queue <processor_t> waiters_t;
-typedef tbb::concurrent_bounded_queue <void*> notifier_t;
+typedef tbb::concurrent_bounded_queue <priv_queue_t*> qoq_t;
+typedef tbb::concurrent_bounded_queue <processor_t*> waiters_t;
+// FIXME: create a new class for the below typedef with 
+// more explicit operations.
+typedef tbb::concurrent_bounded_queue <processor_t*> notifier_t;
 
 class processor
 {
@@ -15,7 +20,7 @@ public:
   processor(spid_t _pid,
             bool _has_backing_thread = false,
             void* _parent_obj = NULL);
-  priv_queue_t find_queue_for(processor_t);
+  priv_queue_t* find_queue_for(processor_t*);
 
   /* main loop */
   void application_loop();
@@ -23,8 +28,12 @@ public:
   void shutdown();
 
   /* registration for wait condition notification */
-  void register_wait(processor_t proc);
-  void notify_next(processor_t current_client);
+  void register_wait(processor_t *proc);
+  void notify_next(processor_t *current_client);
+
+  std::mutex notify_mutex;
+  std::condition_variable notify_cv;
+  processor_t *last_waiter;
 
   /* Request group stack operations */
   /* We have to maintain a stack of the request groups because
@@ -52,9 +61,9 @@ private:
   void* parent_obj;
   notifier_t notifier;
   waiters_t waiters;
-  void process_priv_queue(priv_queue_t);
+  void process_priv_queue(priv_queue_t*);
 
-  std::unordered_map <processor_t, priv_queue_t> queue_cache;
+  std::unordered_map <processor_t*, priv_queue_t*> queue_cache;
 };
 
 

@@ -12,7 +12,7 @@
 #define MAX_PROCS 1024
 
 union proc_or_free_id {
-  processor_t proc;
+  processor_t *proc;
   spid_t next_free_id;
 };
 
@@ -78,7 +78,7 @@ processor_fresh (void *obj)
 }
 
 void
-processor_free_id (processor_t proc)
+processor_free_id (processor_t *proc)
 {
   spid_t pid = proc->pid;
   {
@@ -111,7 +111,7 @@ processor_enumerate_live ()
     }
 }
 
-processor_t
+processor_t*
 processor_get (spid_t pid)
 {
   return proc_list[pid].proc;
@@ -121,9 +121,9 @@ processor_get (spid_t pid)
 void
 call_on (spid_t client_pid, spid_t supplier_pid, void* data)
 {
-  processor_t client = processor_get (client_pid);
-  processor_t supplier = processor_get (supplier_pid);
-  priv_queue_t pq = client->find_queue_for (supplier);
+  processor_t *client = processor_get (client_pid);
+  processor_t *supplier = processor_get (supplier_pid);
+  priv_queue_t *pq = client->find_queue_for (supplier);
 
   if (!supplier->has_backing_thread)
     {
@@ -143,7 +143,7 @@ call_on (spid_t client_pid, spid_t supplier_pid, void* data)
 void
 processor_wait_for_all()
 {
-  processor_t root_proc = processor_get(0);
+  processor_t *root_proc = processor_get(0);
   root_proc->application_loop();
 
   while(!all_done)
@@ -152,7 +152,7 @@ processor_wait_for_all()
       all_done_cv.wait_for(lock,
                            std::chrono::milliseconds(200),
                            []{return all_done;});
-      RTGC;
+      // RTGC;
       printf("GC waiting loop\n");
     }
   printf("processor_wait_for_all\n");

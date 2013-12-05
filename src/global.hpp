@@ -3,7 +3,7 @@
 
 #include "processor.hpp"
 
-processor_t
+processor_t*
 processor_get (spid_t);
 
 void
@@ -13,7 +13,7 @@ void
 processor_enumerate_live ();
 
 void
-processor_free_id (processor_t proc);
+processor_free_id (processor_t *proc);
 
 void
 call_on (spid_t client_pid, spid_t supplier_pid, void* data);
