@@ -14,7 +14,8 @@ libeveqs_la_SOURCES = \
 	qoq.hpp \
 	req_grp.cpp \
 	req_grp.hpp \
-	spsc_queue.hpp
+	spsc_queue.h \
+	spsc_queue.c
 
 BUILT_SOURCES = config.h
 
@@ -22,6 +23,7 @@ include_HEADERS = eveqs.h
 
 FLAGS = -pthread -g \
 	-DEIF_THREADS -DEIF_POSIX_THREADS \
+	-I${HOME}/local/include \
 	-I${ISE_EIFFEL}/studio/spec/${ISE_PLATFORM}/include \
 	-Wall -Wno-unused-value -Wno-unused-variable -Werror -march=native
 libeveqs_la_CFLAGS = -std=gnu99 $(FLAGS) $(DEPS_CFLAGS)

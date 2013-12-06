@@ -8,18 +8,18 @@
 
 template <class V>
 void
-eif_push(tbb::concurrent_bounded_queue<V> &q, const V &val)
+eif_push(tbb::concurrent_bounded_queue<V> *q, const V &val)
 {
   for (int i = 0; i < SPIN; i++)
     {
-      if (q.try_push(val))
+      if (q->try_push(val))
         {
           return;
         }
     }
 
   EIF_ENTER_C;
-  q.push(val);
+  q->push(val);
   EIF_EXIT_C;
   RTGC;
 }
@@ -27,18 +27,18 @@ eif_push(tbb::concurrent_bounded_queue<V> &q, const V &val)
 
 template <class V>
 void
-eif_pop(tbb::concurrent_bounded_queue<V> &q, V &val)
+eif_pop(tbb::concurrent_bounded_queue<V> *q, V &val)
 {
   for (int i = 0; i < SPIN; i++)
     {
-      if (q.try_pop(val))
+      if (q->try_pop(val))
         {
           return;
         }
     }
 
   EIF_ENTER_C;
-  q.pop(val);
+  q->pop(val);
   EIF_EXIT_C;
   RTGC;
 }

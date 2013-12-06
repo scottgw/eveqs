@@ -10,14 +10,26 @@
 #include "private_queue.hpp"
 #include "req_grp.hpp"
 
-// typedef tbb::tbb_allocator<mpscq_node_t> node_allocator_t;
 typedef std::allocator<mpscq_node_t> node_allocator_t;
 typedef mpscq_t qoq_t;
-// typedef tbb::concurrent_bounded_queue <priv_queue_t*> qoq_t;
+
 typedef tbb::concurrent_bounded_queue <processor_t*> waiters_t;
-// FIXME: create a new class for the below typedef with 
-// more explicit operations.
-typedef tbb::concurrent_bounded_queue <processor_t*> notifier_t;
+
+typedef tbb::concurrent_bounded_queue <void*> notifier_queue;
+
+struct notifier : public notifier_queue {
+  void wait ()
+  {
+    void* dummy;
+    eif_pop(static_cast<notifier_queue*> (this), dummy);
+  }
+
+  void wake ()
+  {
+    void* dummy = NULL;
+    eif_push(static_cast<notifier_queue*> (this), dummy);
+  }
+};
 
 class processor
 {
@@ -32,29 +44,19 @@ public:
   void spawn();
   void shutdown();
 
+public:
   /* registration for wait condition notification */
   void register_wait(processor_t *proc);
   void notify_next(processor_t *current_client);
 
   std::mutex notify_mutex;
   std::condition_variable notify_cv;
-  processor_t *last_waiter;
+  volatile uint32_t session_id;
+  notifier wait_cond_notify;
 
-  /* Request group stack operations */
-  /* We have to maintain a stack of the request groups because
-     I'd like to maintain compatibility with the code generation
-     as it stands now.
-     Their existing implementation also maintains a sort of stack
-     like this */
-  // void lock_req_grp ();
-  // void add_to_req_grp (processor_t);
-  // void push_new_req_grp ();
-  // void unlock_req_grp();
-  // void pop_req_grp();
 
-  /* waiting and waking for query results */
-  void wake();
-  void wait();
+public:
+  notifier result_notify;
 
 public:
   bool has_backing_thread;
@@ -73,7 +75,6 @@ private:
 
 private:
   void* parent_obj;
-  notifier_t notifier;
   waiters_t waiters;
   void process_priv_queue(priv_queue_t*);
   std::unordered_map <processor_t*, priv_queue_t*> queue_cache;

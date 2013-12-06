@@ -1,5 +1,3 @@
-#define EIF_THREADS
-#define EIF_POSIX_THREADS
 #include <stdarg.h>
 #include "eveqs.h"
 #include "internal.hpp"
@@ -15,10 +13,11 @@
 processor::processor(spid_t _pid,
                      bool _has_backing_thread,
                      void* _parent_obj) :
-  pid(_pid), has_backing_thread (_has_backing_thread), parent_obj (_parent_obj)
+  has_backing_thread (_has_backing_thread),
+  pid(_pid),
+  parent_obj (_parent_obj)
 {
-  // qoq.set_capacity(1024);
-  last_waiter = NULL;
+  session_id = 0;
   stub = node_allocator.allocate(1);
   mpscq_create (&qoq, stub);
 }
@@ -30,7 +29,6 @@ processor::process_priv_queue(priv_queue_t *pq)
     {
       call_data *call;
 
-      // printf("%d waiting on priv queue for %d\n", pid, pq->client->pid);
       pq->pop(call);
 
       if (call == NULL)
@@ -44,7 +42,7 @@ processor::process_priv_queue(priv_queue_t *pq)
         {
           // We've processed the call so notify the client
           // that their result is ready.
-          pq->client->wake();
+          pq->client->result_notify.wake();
         }
 
       eif_free_call (call);
@@ -53,15 +51,9 @@ processor::process_priv_queue(priv_queue_t *pq)
 
 
 void
-spawn_main(char* data, ...)
+spawn_main(char* data, spid_t pid)
 {
-  va_list ap;
-  va_start (ap, 1);
-  spid_t pid = (spid_t)va_arg(ap, int);
-  va_end (ap);
-
   processor_t *proc = processor_get(pid);
-
   proc->application_loop();
 }
 
@@ -71,7 +63,7 @@ processor::spawn()
 {
   eif_thr_create_with_attr_new ((char**)parent_obj, // No root object, if this is only
                                                     // passed to spawn_main this is OK
-                                spawn_main,
+                                (void (*)(char* data, ...)) spawn_main,
                                 pid, // Logical PID
                                 EIF_TRUE, // We are a processor
                                 NULL); // There are no attributes
@@ -79,19 +71,18 @@ processor::spawn()
 
 void
 processor::register_wait(processor_t *proc)
-{ 
+{
   EIF_ENTER_C;
   {
     std::unique_lock<std::mutex> lock (notify_mutex);
-    // printf("%d waiting on %d\n", proc->pid, pid);
-    while (proc == this->last_waiter)
+    uint32_t old_session_id = session_id;
+    while (session_id == old_session_id)
       {
         notify_cv.wait (lock);
       }
   }
   EIF_EXIT_C;
-  // RTGC;
-  // printf("%d waking from %d\n", proc->pid, pid);
+  RTGC;
 }
 
 void
@@ -100,11 +91,10 @@ processor::notify_next(processor_t *current_client)
   EIF_ENTER_C;
   {
     std::unique_lock<std::mutex> lock (notify_mutex);
-    last_waiter = current_client;
     notify_cv.notify_all();
   }
   EIF_EXIT_C;
-  // RTGC;
+  RTGC;
 }
 
 void
@@ -114,12 +104,11 @@ processor::application_loop()
     {
       priv_queue_t *pq;
 
-      // printf("%d waiting on qoq\n", pid);
       qoq_pop(pq);
 
       if (pq)
         {
-          // printf("%d processing queue for %d\n", pid, pq->client->pid);
+          session_id++;
           process_priv_queue (pq);
           notify_next (pq->client);
         }
@@ -130,7 +119,6 @@ processor::application_loop()
 
     }
 
-  // printf("processor::application_loop freeing\n");
   processor_free_id (this);
 }
 
@@ -150,7 +138,7 @@ processor::qoq_push(void *val)
 
   {
     std::unique_lock<std::mutex> lock(qoq_mutex);
-    qoq_cv.notify_one();
+    qoq_cv.notify_all();
   }
 }
 
@@ -169,16 +157,17 @@ processor::qoq_pop(priv_queue * &pq)
         }
     }
 
-  while ((node = mpscq_pop(&qoq)) == 0)
-    {
-      EIF_ENTER_C;
+
+  EIF_ENTER_C;
+  {
+    std::unique_lock<std::mutex> lock(qoq_mutex);
+    while ((node = mpscq_pop(&qoq)) == 0)
       {
-        std::unique_lock<std::mutex> lock(qoq_mutex);
         qoq_cv.wait(lock);
       }
-      EIF_EXIT_C;
-      RTGC;
-    }
+  }
+  EIF_EXIT_C;
+  RTGC;
 
   pq = (priv_queue *) node->state;
   pq->client->deallocate (node);
@@ -204,18 +193,4 @@ void
 processor::shutdown()
 {
   qoq_push (NULL);
-}
-
-void
-processor::wake()
-{
-  processor_t *dummy = NULL;
-  eif_push(notifier, dummy);
-}
-
-void
-processor::wait()
-{
-  processor_t *dummy;
-  eif_pop(notifier, dummy);
 }
