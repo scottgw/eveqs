@@ -10,9 +10,6 @@
 #include "private_queue.hpp"
 #include "req_grp.hpp"
 
-typedef std::allocator<mpscq_node_t> node_allocator_t;
-typedef mpscq_t qoq_t;
-
 typedef tbb::concurrent_bounded_queue <processor_t*> waiters_t;
 
 typedef tbb::concurrent_bounded_queue <void*> notifier_queue;
@@ -54,24 +51,14 @@ public:
   volatile uint32_t session_id;
   notifier wait_cond_notify;
 
-
 public:
   notifier result_notify;
 
 public:
   bool has_backing_thread;
-  qoq_t qoq;
+  mpscq <priv_queue*> qoq;
   spid_t pid;
   std::stack <req_grp> group_stack;
-  void qoq_push(void *val);
-  void deallocate(mpscq_node_t *node);
-
-private:
-  void qoq_pop(priv_queue * &pq);
-  std::mutex qoq_mutex;
-  std::condition_variable qoq_cv;
-  mpscq_node_t *stub;
-  node_allocator_t node_allocator;
 
 private:
   void* parent_obj;

@@ -9,7 +9,6 @@
 #include "eif_macros.h"
 #include "eif_scoop.h"
 
-
 processor::processor(spid_t _pid,
                      bool _has_backing_thread,
                      void* _parent_obj) :
@@ -18,8 +17,6 @@ processor::processor(spid_t _pid,
   parent_obj (_parent_obj)
 {
   session_id = 0;
-  stub = node_allocator.allocate(1);
-  mpscq_create (&qoq, stub);
 }
 
 void
@@ -76,10 +73,7 @@ processor::register_wait(processor_t *proc)
   {
     std::unique_lock<std::mutex> lock (notify_mutex);
     uint32_t old_session_id = session_id;
-    while (session_id == old_session_id)
-      {
-        notify_cv.wait (lock);
-      }
+    notify_cv.wait (lock, [&](){return session_id == old_session_id;});
   }
   EIF_EXIT_C;
   RTGC;
@@ -104,7 +98,7 @@ processor::application_loop()
     {
       priv_queue_t *pq;
 
-      qoq_pop(pq);
+      qoq.pop(pq);
 
       if (pq)
         {
@@ -120,57 +114,6 @@ processor::application_loop()
     }
 
   processor_free_id (this);
-}
-
-void
-processor::deallocate(mpscq_node_t *node)
-{
-  node_allocator.deallocate(node, 1);
-}
-
-void
-processor::qoq_push(void *val)
-{
-  mpscq_node_t * node = node_allocator.allocate(1);
-  node->state = val;
-
-  mpscq_push(&qoq, node);
-
-  {
-    std::unique_lock<std::mutex> lock(qoq_mutex);
-    qoq_cv.notify_all();
-  }
-}
-
-void
-processor::qoq_pop(priv_queue * &pq)
-{
-  mpscq_node_t *node;
-
-  for (int i = 0; i < 128; i++)
-    {
-      if ((node = mpscq_pop(&qoq)) != 0)
-        {
-          pq = (priv_queue *) node->state;
-          pq->client->deallocate(node);
-          return;
-        }
-    }
-
-
-  EIF_ENTER_C;
-  {
-    std::unique_lock<std::mutex> lock(qoq_mutex);
-    while ((node = mpscq_pop(&qoq)) == 0)
-      {
-        qoq_cv.wait(lock);
-      }
-  }
-  EIF_EXIT_C;
-  RTGC;
-
-  pq = (priv_queue *) node->state;
-  pq->client->deallocate (node);
 }
 
 priv_queue_t*
@@ -192,5 +135,5 @@ processor::find_queue_for(processor_t *supplier)
 void
 processor::shutdown()
 {
-  qoq_push (NULL);
+  qoq.push (NULL);
 }

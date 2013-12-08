@@ -32,23 +32,109 @@
 #ifndef _QOQ_H
 #define _QOQ_H
 
+// This class is an adaptation of the MPSC queue by Dmitry Vyukov to use
+// a TBB allocator and offer a blocking behaviour when the queue is empty.
+
 #include <atomic>
+#include <mutex>
+#include <condition_variable>
+#include <tbb/tbb_allocator.h>
+#include "eif_macros.h"
 
-struct mpscq_node_t 
+template <typename V>
+struct mpscq_node
 { 
-  std::atomic<mpscq_node_t*> volatile  next; 
-  void*                   state; 
-
+  std::atomic<mpscq_node <V> *> volatile next;
+  V state;
 }; 
 
-struct mpscq_t 
-{ 
-  std::atomic<mpscq_node_t*> volatile  head; 
-  mpscq_node_t*           tail; 
-}; 
+template <typename V>
+class mpscq
+{
+public:
+  mpscq()
+  {
+    mpscq_node <V> * stub = allocator.allocate(1);
+    stub->next = 0;
+    head_ = stub;
+    tail_ = stub;
+  }
 
-void mpscq_create(mpscq_t* self, mpscq_node_t* stub);
-void mpscq_push(mpscq_t* self, mpscq_node_t* n);
-mpscq_node_t* mpscq_pop(mpscq_t* self);
+  void
+  push(V v)
+  {
+    mpscq_node <V> * node = allocator.allocate(1);
+    node->state = v;
+
+    push_(node);
+
+    {
+      std::unique_lock<std::mutex> lock(mutex);
+      cv.notify_all();
+    }
+  }
+
+  void
+  pop(V &v)
+  {
+    mpscq_node <V> *node;
+
+    for (int i = 0; i < 128; i++)
+      {
+        if ((node = pop_()) != 0)
+          {
+            goto cleanup;
+          }
+      }
+
+
+    EIF_ENTER_C;
+    {
+      std::unique_lock<std::mutex> lock(mutex);
+      while ((node = pop_()) == 0)
+        {
+          cv.wait(lock);
+        }
+    }
+    EIF_EXIT_C;
+    RTGC;
+
+  cleanup:
+    v = node->state;    
+    allocator.deallocate (node, 1);
+  }
+
+private:
+  void push_(mpscq_node<V> * n)
+  {
+    n->next = 0; 
+    mpscq_node <V> * prev = head_.exchange(n); // serialization-point wrt 
+                                               // producers, acquire-release
+    prev->next = n; // serialization-point wrt consumer, release    
+  }
+
+  mpscq_node <V> * pop_() 
+  { 
+    mpscq_node <V> *tail = tail_;
+    mpscq_node <V> *next = tail->next; // serialization-point wrt producers,
+                                       // acquire
+    if (next) 
+      { 
+        tail_ = next; 
+        tail->state = next->state; 
+        return tail; 
+      } 
+    return 0; 
+  }
+
+private:
+  std::atomic<mpscq_node <V>*> volatile  head_;
+  mpscq_node <V> *           tail_;
+  tbb::tbb_allocator <mpscq_node<V> > allocator;
+
+private: // Synchronization structures
+  std::mutex mutex;
+  std::condition_variable cv;
+};
 
 #endif // _QOQ_H

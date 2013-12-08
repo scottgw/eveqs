@@ -54,7 +54,7 @@ priv_queue::pop(call_data* &data)
 void
 priv_queue::lock()
 {
-  supplier->qoq_push(this);
+  supplier->qoq.push(this);
   synced = false;
 }
 

@@ -10,7 +10,6 @@ libeveqs_la_SOURCES = \
 	private_queue.hpp \
 	processor.cpp \
 	processor.hpp \
-	qoq.cpp \
 	qoq.hpp \
 	req_grp.cpp \
 	req_grp.hpp \
