@@ -39,7 +39,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <tbb/tbb_allocator.h>
-#include "eif_block_token.hpp"
+#include "eif_lock.hpp"
 
 template <typename V>
 struct mpscq_node
@@ -69,8 +69,7 @@ public:
     push_(node);
 
     {
-      eif_block_token token;
-      std::unique_lock<std::mutex> lock(mutex);
+      eif_lock lock (mutex);
       cv.notify_all();
     }
   }
@@ -89,11 +88,10 @@ public:
       }
 
     {
-      eif_block_token token;
-      std::unique_lock<std::mutex> lock(mutex);
+      eif_lock lock (mutex);
       while ((node = pop_()) == 0)
         {
-          cv.wait(lock);
+          cv.wait(lock.unique);
         }
     }
 

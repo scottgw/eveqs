@@ -2,7 +2,7 @@
 #include "internal.hpp"
 #include "processor.hpp"
 #include "private_queue.hpp"
-#include "eif_block_token.hpp"
+#include "eif_lock.hpp"
 
 priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
   client (_client), supplier (_supplier), q()
@@ -34,11 +34,10 @@ priv_queue::pop(call_data* &data)
     }
 
   {
-    eif_block_token token;
-    std::unique_lock<std::mutex> lock (mutex);
+    eif_lock lock (mutex);
     while (!spsc_dequeue(q, &data))
       {
-        cv.wait(lock); // _for(lock, std::chrono::milliseconds(50));
+        cv.wait(lock.unique);
       }
   }
 }

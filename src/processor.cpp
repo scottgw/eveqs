@@ -1,4 +1,5 @@
 #include "eif_block_token.hpp"
+#include "eif_lock.hpp"
 #include "eveqs.h"
 #include "global.hpp"
 #include "internal.hpp"
@@ -68,17 +69,15 @@ processor::spawn()
 void
 processor::register_wait(processor_t *proc)
 {
-  eif_block_token token;
-  std::unique_lock<std::mutex> lock (notify_mutex);
+  eif_lock lock (notify_mutex);
   uint32_t old_session_id = session_id;
-  notify_cv.wait (lock, [&](){return session_id == old_session_id;});
+  notify_cv.wait (lock.unique, [&](){return session_id == old_session_id;});
 }
 
 void
 processor::notify_next(processor_t *current_client)
 {
-  eif_block_token token;
-  std::unique_lock<std::mutex> lock (notify_mutex);
+  eif_lock lock (notify_mutex);
   notify_cv.notify_all();
 }
 
