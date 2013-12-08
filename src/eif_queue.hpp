@@ -2,7 +2,7 @@
 #define _EIF_QUEUE_H
 #include <tbb/concurrent_queue.h>
 #include "qoq.hpp"
-#include "eif_macros.h"
+#include "eif_block_token.hpp"
 
 #define SPIN 64
 
@@ -18,10 +18,10 @@ eif_push(tbb::concurrent_bounded_queue<V> *q, const V &val)
         }
     }
 
-  EIF_ENTER_C;
-  q->push(val);
-  EIF_EXIT_C;
-  RTGC;
+  {
+    eif_block_token token;
+    q->push(val);
+  }
 }
 
 
@@ -37,10 +37,10 @@ eif_pop(tbb::concurrent_bounded_queue<V> *q, V &val)
         }
     }
 
-  EIF_ENTER_C;
-  q->pop(val);
-  EIF_EXIT_C;
-  RTGC;
+  {
+    eif_block_token token;
+    q->pop(val);
+  }
 }
 
 #endif // _EIF_QUEUE_H

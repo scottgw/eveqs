@@ -2,17 +2,13 @@
 #include "internal.hpp"
 #include "processor.hpp"
 #include "private_queue.hpp"
-#include "eif_macros.h"
-#include "eif_scoop.h"
-
-#define PRIV_QUEUE_CAPACITY 1024
+#include "eif_block_token.hpp"
 
 priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
   client (_client), supplier (_supplier), q()
 {
   synced = false;
   q = spsc_queue();
-  // q.set_capacity (PRIV_QUEUE_CAPACITY);
 }
 
 
@@ -37,17 +33,14 @@ priv_queue::pop(call_data* &data)
         }
     }
 
-  EIF_ENTER_C;
   {
+    eif_block_token token;
     std::unique_lock<std::mutex> lock (mutex);
     while (!spsc_dequeue(q, &data))
       {
         cv.wait(lock); // _for(lock, std::chrono::milliseconds(50));
       }
   }
-  EIF_EXIT_C;
-  RTGC;
-
 }
 
 

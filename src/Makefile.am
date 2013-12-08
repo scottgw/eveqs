@@ -2,6 +2,7 @@ lib_LTLIBRARIES = libeveqs.la
 
 libeveqs_la_SOURCES = \
 	eif_queue.hpp \
+	eif_block_token.hpp \
 	eveqs.cpp \
 	global.cpp \
 	global.hpp \

@@ -152,7 +152,6 @@ processor_wait_for_all()
       all_done_cv.wait_for(lock,
                            std::chrono::milliseconds(200),
                            []{return all_done;});
-      // RTGC;
       printf("GC waiting loop\n");
     }
   printf("processor_wait_for_all\n");

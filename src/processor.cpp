@@ -1,13 +1,12 @@
-#include <stdarg.h>
+#include "eif_block_token.hpp"
 #include "eveqs.h"
-#include "internal.hpp"
 #include "global.hpp"
-#include "processor.hpp"
+#include "internal.hpp"
 #include "private_queue.hpp"
-#include "eif_posix_threads.h"
-#include "eif_threads.h"
-#include "eif_macros.h"
-#include "eif_scoop.h"
+#include "processor.hpp"
+#include <eif_posix_threads.h>
+#include <eif_threads.h>
+#include <stdarg.h>
 
 processor::processor(spid_t _pid,
                      bool _has_backing_thread,
@@ -69,26 +68,18 @@ processor::spawn()
 void
 processor::register_wait(processor_t *proc)
 {
-  EIF_ENTER_C;
-  {
-    std::unique_lock<std::mutex> lock (notify_mutex);
-    uint32_t old_session_id = session_id;
-    notify_cv.wait (lock, [&](){return session_id == old_session_id;});
-  }
-  EIF_EXIT_C;
-  RTGC;
+  eif_block_token token;
+  std::unique_lock<std::mutex> lock (notify_mutex);
+  uint32_t old_session_id = session_id;
+  notify_cv.wait (lock, [&](){return session_id == old_session_id;});
 }
 
 void
 processor::notify_next(processor_t *current_client)
 {
-  EIF_ENTER_C;
-  {
-    std::unique_lock<std::mutex> lock (notify_mutex);
-    notify_cv.notify_all();
-  }
-  EIF_EXIT_C;
-  RTGC;
+  eif_block_token token;
+  std::unique_lock<std::mutex> lock (notify_mutex);
+  notify_cv.notify_all();
 }
 
 void
