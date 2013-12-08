@@ -15,6 +15,7 @@ libeveqs_la_SOURCES = \
 	qoq.hpp \
 	req_grp.cpp \
 	req_grp.hpp \
+	spsc.hpp \
 	spsc_queue.h \
 	spsc_queue.c
 

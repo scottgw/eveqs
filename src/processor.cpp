@@ -26,7 +26,7 @@ processor::process_priv_queue(priv_queue_t *pq)
     {
       call_data *call;
 
-      pq->pop(call);
+      pq->q.pop(call);
 
       if (call == NULL)
         {

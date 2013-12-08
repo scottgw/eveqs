@@ -8,40 +8,7 @@ priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
   client (_client), supplier (_supplier), q()
 {
   synced = false;
-  q = spsc_queue();
 }
-
-
-void
-priv_queue::spsc_push(call_data* data)
-{
-  spsc_enqueue(q, data);
-  {
-    std::unique_lock<std::mutex> lock (mutex);
-    cv.notify_one();
-  }
-}
-
-void
-priv_queue::pop(call_data* &data)
-{
-  for (int i = 0; i < 512; i++)
-    {
-      if (spsc_dequeue(q, &data))
-        {
-          return;
-        }
-    }
-
-  {
-    eif_lock lock (mutex);
-    while (!spsc_dequeue(q, &data))
-      {
-        cv.wait(lock.unique);
-      }
-  }
-}
-
 
 void
 priv_queue::lock()
@@ -63,7 +30,7 @@ priv_queue::log_call(void *data)
   call_data *call = (call_data*) data;
   bool will_sync = call_data_sync_pid (call) != NULL_PROCESSOR_ID;
 
-  spsc_push (call);
+  q.push (call);
 
   if (will_sync)
     {
@@ -77,6 +44,6 @@ void
 priv_queue::unlock()
 {
   call_data *call = NULL;
-  spsc_push (call);
+  q.push (call);
   synced = false;
 }
