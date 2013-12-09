@@ -9,12 +9,13 @@
 #include "eif_queue.hpp"
 #include "private_queue.hpp"
 #include "req_grp.hpp"
+#include "spsc.hpp"
 
 typedef tbb::concurrent_bounded_queue <processor_t*> waiters_t;
 
 typedef tbb::concurrent_bounded_queue <void*> notifier_queue;
 
-struct notifier : public notifier_queue {
+struct notifier : notifier_queue {
   void wait ()
   {
     void* dummy;
@@ -34,15 +35,26 @@ public:
   processor(spid_t _pid,
             bool _has_backing_thread = false,
             void* _parent_obj = NULL);
-  priv_queue_t* find_queue_for(processor_t*);
 
-  /* main loop */
+  // lifetime operations
   void application_loop();
-  void spawn();
   void shutdown();
 
+  // queue cache
 public:
-  /* registration for wait condition notification */
+  priv_queue_t* find_queue_for(processor_t*);
+
+  // queue operations, move to private and offer clients
+  // only pushing capabilities?
+public:
+  mpscq <priv_queue*> qoq;
+
+  // separate argument stacks
+public:
+  std::stack <req_grp> group_stack;
+
+  // registration for wait condition notification
+public:
   void register_wait(processor_t *proc);
   void notify_next(processor_t *current_client);
 
@@ -50,21 +62,25 @@ public:
   std::condition_variable notify_cv;
   volatile uint32_t session_id;
   notifier wait_cond_notify;
-
+  
+  // result notification
 public:
   notifier result_notify;
 
+  // Interoperability with the ES runtime
 public:
+  void spawn();
   bool has_backing_thread;
-  mpscq <priv_queue*> qoq;
   spid_t pid;
-  std::stack <req_grp> group_stack;
-
-private:
   void* parent_obj;
+
+  // private stuff, no particular grouping
+private:
   waiters_t waiters;
   void process_priv_queue(priv_queue_t*);
   std::unordered_map <processor_t*, priv_queue_t*> queue_cache;
+
+
 };
 
 
