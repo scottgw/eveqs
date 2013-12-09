@@ -160,6 +160,7 @@ private:
   spsc_queue_impl & operator = (spsc_queue_impl const&);
 };
 
+template <typename T>
 class spsc
 {
 public:
@@ -168,11 +169,11 @@ public:
   }
 
   void
-  pop(call_data* &data)
+  pop(T &v)
   {
     for (int i = 0; i < 512; i++)
       {
-        if (q.dequeue(data))
+        if (q.dequeue(v))
           {
             return;
           }
@@ -180,7 +181,7 @@ public:
 
     {
       eif_lock lock (mutex);
-      while (!q.dequeue(data))
+      while (!q.dequeue(v))
         {
           cv.wait(lock);
         }
@@ -188,9 +189,9 @@ public:
   }
 
   void
-  push(call_data* data)
+  push(T v)
   {
-    q.enqueue(data);
+    q.enqueue(v);
 
     {
       std::unique_lock<std::mutex> lock (mutex);
@@ -199,7 +200,7 @@ public:
   }
 
 private:
-  spsc_queue_impl<call_data*> q;
+  spsc_queue_impl<T> q;
   std::mutex mutex;
   std::condition_variable cv;
 };
