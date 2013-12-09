@@ -1,28 +1,59 @@
+// Copyright (c) 2010-2011 Dmitry Vyukov. All rights reserved.
+
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+
+//    1. Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+
+//    2. Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+
+// THIS SOFTWARE IS PROVIDED BY DMITRY VYUKOV "AS IS" AND ANY EXPRESS OR
+// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL DMITRY VYUKOV OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+// BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+// OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+// IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+// The views and conclusions contained in the software and documentation
+// are those of the authors and should not be interpreted as representing
+// official policies, either expressed or implied, of Dmitry Vyukov.
+
 #ifndef _SPSC_H
 #define _SPSC_H
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <tbb/tbb_allocator.h>
 
 #define __memory_barrier() atomic_thread_fence (std::memory_order_seq_cst)
 
-// // load with 'consume' (data-dependent) memory ordering
+// load with 'consume' (data-dependent) memory ordering
 template<typename T>
 T load_consume(T const* addr)
 {
-    // hardware fence is implicit on x86
-    T v = *const_cast<T const volatile*>(addr);
-    __memory_barrier(); // compiler fence
-    return v;
+  // hardware fence is implicit on x86
+  T v = *const_cast<T const volatile*>(addr);
+  __memory_barrier(); // compiler fence
+  return v;
 }
 
 // store with 'release' memory ordering
 template<typename T>
 void store_release(T* addr, T v)
 {
-    // hardware fence is implicit on x86
-    __memory_barrier(); // compiler fence
-    *const_cast<T volatile*>(addr) = v;
+  // hardware fence is implicit on x86
+  __memory_barrier(); // compiler fence
+  *const_cast<T volatile*>(addr) = v;
 }
 
 
@@ -36,7 +67,7 @@ class spsc_queue_impl
 public:
   spsc_queue_impl()
   {
-    node* n = new node;
+    node* n = allocator.allocate(1);
     n->next_ = 0;
     tail_ = head_ = first_= tail_copy_ = n;
   }
@@ -47,7 +78,7 @@ public:
     do
       {
         node* next = n->next_;
-        delete n;
+        allocator.deallocate(n, 1);
         n = next;
       }
     while (n);
@@ -119,13 +150,14 @@ private:
         first_ = first_->next_;
         return n;
       }
-    node* n = new node;
+    node* n = allocator.allocate(1);;
     return n;
   }
 
-spsc_queue_impl(spsc_queue_impl const&);
-spsc_queue_impl & operator = (spsc_queue_impl const&);
+  tbb::tbb_allocator<node> allocator;
 
+  spsc_queue_impl(spsc_queue_impl const&);
+  spsc_queue_impl & operator = (spsc_queue_impl const&);
 };
 
 class spsc
@@ -138,7 +170,7 @@ public:
   void
   pop(call_data* &data)
   {
-    for (int i = 0; i < 128; i++)
+    for (int i = 0; i < 512; i++)
       {
         if (q.dequeue(data))
           {
@@ -167,9 +199,9 @@ public:
   }
 
 private:
-spsc_queue_impl<call_data*> q;
-std::mutex mutex;
-std::condition_variable cv;
+  spsc_queue_impl<call_data*> q;
+  std::mutex mutex;
+  std::condition_variable cv;
 };
 
 #endif // _SPSC_H
