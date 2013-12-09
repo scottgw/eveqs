@@ -71,7 +71,7 @@ processor::register_wait(processor_t *proc)
 {
   eif_lock lock (notify_mutex);
   uint32_t old_session_id = session_id;
-  notify_cv.wait (lock.unique, [&](){return session_id == old_session_id;});
+  notify_cv.wait (lock, [&](){return session_id != old_session_id;});
 }
 
 void

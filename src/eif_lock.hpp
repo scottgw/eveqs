@@ -3,16 +3,13 @@
 #include <mutex>
 #include "eif_block_token.hpp"
 
-class eif_lock
+class eif_lock : eif_block_token, public std::unique_lock <std::mutex>
 {
 public:
-  eif_lock (std::mutex &mutex) : unique (mutex)
+  eif_lock (std::mutex &mutex) :
+    eif_block_token (),
+    std::unique_lock <std::mutex> (mutex)
   {}
-
-private:
-  eif_block_token token;
-public:
-  std::unique_lock<std::mutex> unique;
 };
 
 #endif // _EIF_LOCK_H

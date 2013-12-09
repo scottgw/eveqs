@@ -91,7 +91,7 @@ public:
       eif_lock lock (mutex);
       while ((node = pop_()) == 0)
         {
-          cv.wait(lock.unique);
+          cv.wait(lock);
         }
     }
 

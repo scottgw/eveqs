@@ -27,7 +27,7 @@ public:
       eif_lock lock (mutex);
       while (!spsc_dequeue(q, &data))
         {
-          cv.wait(lock.unique);
+          cv.wait(lock);
         }
     }
   }
