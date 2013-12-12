@@ -3,7 +3,7 @@
 #include "eif_queue.hpp"
 #include "spsc.hpp"
 
-typedef spsc priv_queue_inner;
+typedef spsc<call_data*> priv_queue_inner;
 
 class processor;
 typedef class processor processor_t;
