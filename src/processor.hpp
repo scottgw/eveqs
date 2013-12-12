@@ -63,6 +63,10 @@ public:
   volatile uint32_t session_id;
   notifier wait_cond_notify;
   
+  // activity flag for the GC
+public:
+  bool has_client;
+
   // result notification
 public:
   notifier result_notify;

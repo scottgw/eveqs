@@ -5,9 +5,12 @@
 #include "internal.hpp"
 #include "private_queue.hpp"
 #include "processor.hpp"
+#include <atomic>
 #include <eif_posix_threads.h>
 #include <eif_threads.h>
 #include <stdarg.h>
+
+std::atomic<int> active_count = ATOMIC_VAR_INIT (0);
 
 processor::processor(spid_t _pid,
                      bool _has_backing_thread,
@@ -16,6 +19,7 @@ processor::processor(spid_t _pid,
   pid(_pid),
   parent_obj (_parent_obj)
 {
+  active_count++;
   session_id = 0;
 }
 
@@ -88,22 +92,34 @@ processor::application_loop()
     {
       priv_queue_t *pq;
 
+      if (--active_count == 0)
+        {
+          plsc();
+        }
+
       qoq.pop(pq);
 
       if (pq)
         {
+          active_count++;
+          has_client = true;
           session_id++;
           process_priv_queue (pq);
           notify_next (pq->client);
+          has_client = false;
         }
       else
         {
           break;
         }
-
     }
 
-  processor_free_id (this);
+  // We don't free the root processor (0),
+  // because it will 
+  if (pid)
+    {
+      processor_free_id (this);
+    }
 }
 
 priv_queue_t*

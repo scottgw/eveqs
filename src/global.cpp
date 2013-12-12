@@ -3,6 +3,7 @@
 #include "eveqs.h"
 #include "internal.hpp"
 #include "processor.hpp"
+#include "global.hpp"
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -38,6 +39,7 @@ processor_init()
   proc_list = (proc_or_free_id*) malloc (MAX_PROCS * sizeof(proc_or_free_id));
 
   proc_list[0].proc = new processor(0);
+  proc_list[0].proc->has_client = true;
 
   for (int i = 1; i < MAX_PROCS; i++)
     {
@@ -81,11 +83,14 @@ void
 processor_free_id (processor_t *proc)
 {
   spid_t pid = proc->pid;
+
   {
     std::lock_guard <std::mutex> lock (mutex);
     proc_list[pid].next_free_id = free_id;
     free_id = pid;
   }
+
+  delete proc;
 
   used_pid_set.erase(pid);
 
@@ -100,13 +105,13 @@ processor_free_id (processor_t *proc)
 void
 processor_enumerate_live ()
 {
-  // printf("[info] enumerate live\n");
-  for (int i = 0; i < MAX_PROCS; i++)
+  for (auto &pid : used_pid_set)
     {
-      if (used_pid_set.count (i) == 1)
+      processor* proc = processor_get (pid.second);
+      
+      if (proc->has_client)
         {
-          // printf("[info] enumerate live: marking %d\n", i);s
-          eif_mark_live_pid (i);
+          eif_mark_live_pid (proc->pid);
         }
     }
 }
@@ -117,6 +122,15 @@ processor_get (spid_t pid)
   return proc_list[pid].proc;
 }
 
+void
+processor_unmark (spid_t pid)
+{
+  if (used_pid_set.count (pid) == 1)
+    {
+      processor_t *proc = processor_get (pid);
+      proc->shutdown();
+    }
+}
 
 void
 call_on (spid_t client_pid, spid_t supplier_pid, void* data)
@@ -144,15 +158,14 @@ void
 processor_wait_for_all()
 {
   processor_t *root_proc = processor_get(0);
+  root_proc->has_client = false;
   root_proc->application_loop();
 
   while(!all_done)
     {
-      std::unique_lock<std::mutex> lock(all_done_mutex);
+      eif_lock lock (all_done_mutex);
       all_done_cv.wait_for(lock,
                            std::chrono::milliseconds(200),
                            []{return all_done;});
-      printf("GC waiting loop\n");
     }
-  printf("processor_wait_for_all\n");
 }

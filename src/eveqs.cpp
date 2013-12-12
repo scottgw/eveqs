@@ -87,15 +87,7 @@ extern "C"
   void
   eveqs_unmarked(spid_t pid)
   {
-    processor_t *proc = processor_get (pid);
-    printf("[info] eveqs_unmarked\n");
-
-    proc->shutdown();
-
-    // if (pid == 0)
-    //   {
-    //     processor_free_id (proc);
-    //   }
+    processor_unmark (pid);
   }
 
   void
@@ -107,7 +99,7 @@ extern "C"
   void
   eveqs_wait_for_all()
   {
-    // processor_wait_for_all();
+    processor_wait_for_all();
   }
 
 }
