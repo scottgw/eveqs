@@ -60,7 +60,7 @@ public:
 
   std::mutex notify_mutex;
   std::condition_variable notify_cv;
-  volatile uint32_t session_id;
+  processor *waiter;
   notifier wait_cond_notify;
   
   // activity flag for the GC

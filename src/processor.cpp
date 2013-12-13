@@ -20,7 +20,6 @@ processor::processor(spid_t _pid,
   parent_obj (_parent_obj)
 {
   active_count++;
-  session_id = 0;
 }
 
 void
@@ -74,14 +73,15 @@ void
 processor::register_wait(processor_t *proc)
 {
   eif_lock lock (notify_mutex);
-  uint32_t old_session_id = session_id;
-  notify_cv.wait (lock, [&](){return session_id != old_session_id;});
+  waiter = proc;
+  notify_cv.wait (lock, [&](){return waiter != proc;});
 }
 
 void
 processor::notify_next(processor_t *current_client)
 {
   eif_lock lock (notify_mutex);
+  waiter = current_client;
   notify_cv.notify_all();
 }
 
@@ -92,6 +92,11 @@ processor::application_loop()
     {
       priv_queue_t *pq;
 
+      // Triggering the collection happens when all
+      // processors are idle. This is sufficient for
+      // program termination, but not sufficient for
+      // freeing threads to let new ones take their
+      // place.
       if (--active_count == 0)
         {
           plsc();
@@ -103,9 +108,10 @@ processor::application_loop()
         {
           active_count++;
           has_client = true;
-          session_id++;
+
           process_priv_queue (pq);
           notify_next (pq->client);
+
           has_client = false;
         }
       else
@@ -114,12 +120,7 @@ processor::application_loop()
         }
     }
 
-  // We don't free the root processor (0),
-  // because it will 
-  if (pid)
-    {
-      processor_free_id (this);
-    }
+  processor_free_id (this);
 }
 
 priv_queue_t*

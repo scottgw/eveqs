@@ -94,7 +94,7 @@ processor_free_id (processor_t *proc)
 
   used_pid_set.erase(pid);
 
-  if (used_pid_set.size() == 1)
+  if (used_pid_set.size() == 0)
     {
       std::unique_lock<std::mutex> lock(all_done_mutex);
       all_done = true;
@@ -125,6 +125,11 @@ processor_get (spid_t pid)
 void
 processor_unmark (spid_t pid)
 {
+  // This is a callback from the GC, which will notify us
+  // of all unused processors, even those that have already been
+  // shutdown, but still have a thread of execution.
+  // To avoid double free/shutdown we check first to see if they're
+  // still active.
   if (used_pid_set.count (pid) == 1)
     {
       processor_t *proc = processor_get (pid);
