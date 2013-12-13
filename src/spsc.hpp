@@ -60,10 +60,14 @@ void store_release(T* addr, T v)
 // cache line size on modern x86 processors (in bytes)
 size_t const cache_line_size = 64;
 
+template<typename T>
+class spsc;
+
 // single-producer/single-consumer queue
 template<typename T>
 class spsc_queue_impl
 {
+  friend class spsc<T>;
 public:
   spsc_queue_impl()
   {
@@ -199,6 +203,14 @@ public:
     }
   }
 
+  void
+  unsafe_map_ (std::function <void(T)> f)
+  {
+    for (auto n = q.tail_ ; n->next_ ; n = n->next_)
+      {
+        f (n->value_);
+      }
+  }
 private:
   spsc_queue_impl<T> q;
   std::mutex mutex;

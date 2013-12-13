@@ -1,6 +1,6 @@
 #ifndef _PRIV_QUEUE_H
 #define _PRIV_QUEUE_H
-#include "eif_queue.hpp"
+#include "eif_utils.hpp"
 #include "spsc.hpp"
 
 typedef spsc<call_data*> priv_queue_inner;
@@ -22,6 +22,12 @@ public:
 
   bool synced;
   priv_queue_inner q;
+
+
+  // GC interaction
+public:
+  void mark (marker_t mark);
+
 };
 
 

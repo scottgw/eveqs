@@ -1,11 +1,12 @@
-#include "eif_macros.h"
-#include "eif_scoop.h"
+#include "eif_utils.hpp"
 #include "eveqs.h"
+#include "global.hpp"
 #include "internal.hpp"
 #include "processor.hpp"
-#include "global.hpp"
 #include <chrono>
 #include <condition_variable>
+#include <eif_macros.h>
+#include <eif_scoop.h>
 #include <mutex>
 #include <stdlib.h>
 #include <tbb/concurrent_hash_map.h>
@@ -107,7 +108,7 @@ processor_enumerate_live ()
 {
   for (auto &pid : used_pid_set)
     {
-      processor* proc = processor_get (pid.second);
+      processor* proc = processor_get (pid.first);
       
       if (proc->has_client)
         {
@@ -172,5 +173,16 @@ processor_wait_for_all()
       all_done_cv.wait_for(lock,
                            std::chrono::milliseconds(200),
                            []{return all_done;});
+    }
+}
+
+void
+processor_mark_all (marker_t mark)
+{
+  for (auto &spid_pair : used_pid_set)
+    {
+      spid_t pid = spid_pair.first;
+      processor *proc = processor_get (pid);
+      proc->mark (mark);
     }
 }

@@ -39,7 +39,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <tbb/tbb_allocator.h>
-#include "eif_lock.hpp"
+#include "eif_utils.hpp"
 
 template <typename V>
 struct mpscq_node

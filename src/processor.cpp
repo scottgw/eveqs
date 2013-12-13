@@ -1,5 +1,4 @@
-#include "eif_block_token.hpp"
-#include "eif_lock.hpp"
+#include "eif_utils.hpp"
 #include "eveqs.h"
 #include "global.hpp"
 #include "internal.hpp"
@@ -15,6 +14,7 @@ std::atomic<int> active_count = ATOMIC_VAR_INIT (0);
 processor::processor(spid_t _pid,
                      bool _has_backing_thread,
                      void* _parent_obj) :
+  executing_call (NULL),
   has_backing_thread (_has_backing_thread),
   pid(_pid),
   parent_obj (_parent_obj)
@@ -27,25 +27,24 @@ processor::process_priv_queue(priv_queue_t *pq)
 {
   for (;;)
     {
-      call_data *call;
+      pq->q.pop(executing_call);
 
-      pq->q.pop(call);
-
-      if (call == NULL)
+      if (executing_call == NULL)
         {
           return;
         }
 
-      eif_try_call (call);
+      eif_try_call (executing_call);
 
-      if (call_data_sync_pid (call) != NULL_PROCESSOR_ID)
+      if (call_data_sync_pid (executing_call) != NULL_PROCESSOR_ID)
         {
           // We've processed the call so notify the client
           // that their result is ready.
           pq->client->result_notify.wake();
         }
 
-      eif_free_call (call);
+      eif_free_call (executing_call);
+      executing_call = NULL;
     }
 }
 
@@ -143,4 +142,19 @@ void
 processor::shutdown()
 {
   qoq.push (NULL);
+}
+
+
+void
+processor::mark(marker_t mark)
+{
+  if (executing_call)
+    {
+      mark_call_data (mark, executing_call);
+    }
+
+  for (auto &pq : queue_cache)
+    {
+      pq.second->mark (mark);
+    }
 }

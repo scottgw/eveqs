@@ -2,7 +2,7 @@
 #include "internal.hpp"
 #include "processor.hpp"
 #include "private_queue.hpp"
-#include "eif_lock.hpp"
+#include "eif_utils.hpp"
 
 priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
   client (_client), supplier (_supplier), q()
@@ -46,4 +46,11 @@ priv_queue::unlock()
   call_data *call = NULL;
   q.push (call);
   synced = false;
+}
+
+void
+priv_queue::mark(marker_t mark)
+{
+  auto mark_call = [&](call_data* call) { mark_call_data (mark, call); };
+  q.unsafe_map_ (mark_call);
 }

@@ -6,12 +6,12 @@
 #include <condition_variable>
 #include <unordered_map>
 #include "qoq.hpp"
-#include "eif_queue.hpp"
+#include "eif_utils.hpp"
 #include "private_queue.hpp"
 #include "req_grp.hpp"
 #include "spsc.hpp"
 
-typedef tbb::concurrent_bounded_queue <processor_t*> waiters_t;
+typedef tbb::concurrent_bounded_queue <processor_t*> waiters_t;                 
 
 typedef tbb::concurrent_bounded_queue <void*> notifier_queue;
 
@@ -63,9 +63,11 @@ public:
   processor *waiter;
   notifier wait_cond_notify;
   
-  // activity flag for the GC
+  // GC interaction
 public:
-  bool has_client;
+  bool has_client;   // activity flag for the GC
+  call_data* executing_call;
+  void mark (marker_t mark);
 
   // result notification
 public:
@@ -83,8 +85,6 @@ private:
   waiters_t waiters;
   void process_priv_queue(priv_queue_t*);
   std::unordered_map <processor_t*, priv_queue_t*> queue_cache;
-
-
 };
 
 
