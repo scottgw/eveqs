@@ -1,6 +1,7 @@
 lib_LTLIBRARIES = libeveqs.la
 
 libeveqs_la_SOURCES = \
+	eif_utils.cpp \
 	eif_utils.hpp \
 	eveqs.cpp \
 	global.cpp \

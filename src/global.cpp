@@ -176,13 +176,22 @@ processor_wait_for_all()
     }
 }
 
+volatile bool is_marking = false;
+
 void
 processor_mark_all (marker_t mark)
 {
+  if (is_marking)
+    {
+      return;
+    }
+
+  is_marking = true;
   for (auto &spid_pair : used_pid_set)
     {
       spid_t pid = spid_pair.first;
       processor *proc = processor_get (pid);
       proc->mark (mark);
     }
+  is_marking = false;
 }

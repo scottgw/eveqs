@@ -24,4 +24,7 @@ call_on (spid_t client_pid, spid_t supplier_pid, void* data);
 void
 processor_wait_for_all();
 
+void
+processor_mark_all (marker_t mark);
+
 #endif // _GLOBAL_H

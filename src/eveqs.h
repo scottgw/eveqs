@@ -61,6 +61,9 @@ extern "C" {
   void
   eveqs_enumerate_live ();
 
+  void
+  eveqs_mark_all (char* (*marker)(char**));
+
 #ifdef __cplusplus
 }
 #endif

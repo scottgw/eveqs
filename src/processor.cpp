@@ -43,7 +43,7 @@ processor::process_priv_queue(priv_queue_t *pq)
           pq->client->result_notify.wake();
         }
 
-      eif_free_call (executing_call);
+      free (executing_call);
       executing_call = NULL;
     }
 }

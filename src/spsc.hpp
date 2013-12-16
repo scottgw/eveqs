@@ -206,7 +206,8 @@ public:
   void
   unsafe_map_ (std::function <void(T)> f)
   {
-    for (auto n = q.tail_ ; n->next_ ; n = n->next_)
+    assert (q.tail_);
+    for (auto n = q.tail_->next_ ; n ; n = n->next_)
       {
         f (n->value_);
       }

@@ -1,3 +1,4 @@
+#include "eif_utils.hpp"
 #include "eveqs.h"
 #include "global.hpp"
 #include "processor.hpp"
@@ -102,4 +103,9 @@ extern "C"
     processor_wait_for_all();
   }
 
+  void
+  eveqs_mark_all (marker_t mark)
+  {
+    processor_mark_all (mark);
+  }
 }

@@ -6,23 +6,8 @@
 
 typedef EIF_REFERENCE marker_t(EIF_REFERENCE *);
 
-// We use inline rather than static because at the inclusion site
-// this function may not always be used (due to the grouping in this
-// header).
-inline
 void
-mark_call_data(marker_t mark, call_data* call)
-{
-  EIF_REFERENCE *targ = (EIF_REFERENCE*)(&call->target);
-  *targ = mark (targ);
-
-  for (size_t i = 0; i < call->count; i++)
-    {
-      EIF_REFERENCE *arg = &call->argument[i].it_r;
-      *arg = mark (arg);
-    }
-}
-
+mark_call_data(marker_t mark, call_data* call);
 
 class eif_block_token
 {
