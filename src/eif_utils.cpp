@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "eif_utils.hpp"
 
 void
