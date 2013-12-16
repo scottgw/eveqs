@@ -5,16 +5,24 @@
 #include "eif_utils.hpp"
 
 priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
-  client (_client), supplier (_supplier), q()
+  client (_client),
+  supplier (_supplier),
+  synced(false),
+  q(),
+  lock_depth(0)
 {
-  synced = false;
 }
 
 void
 priv_queue::lock()
 {
-  supplier->qoq.push(this);
-  synced = false;
+  lock_depth++;
+
+  if (lock_depth == 1)
+    {
+      supplier->qoq.push(this);
+      synced = false;
+    }
 }
 
 void
@@ -43,9 +51,14 @@ priv_queue::log_call(void *data)
 void
 priv_queue::unlock()
 {
-  call_data *call = NULL;
-  q.push (call);
-  synced = false;
+  lock_depth--;
+
+  if (lock_depth == 0)
+    {
+      call_data *call = NULL;
+      q.push (call);
+      synced = false;
+    }
 }
 
 void

@@ -28,6 +28,9 @@ public:
 public:
   void mark (marker_t mark);
 
+private:
+  int lock_depth;
+
 };
 
 
