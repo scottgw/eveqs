@@ -1,0 +1,12 @@
+#!/bin/bash
+SCOOPQS=1
+
+ec -config $1 -target $2 -finalize
+
+for file in EIFGENs/*
+do
+    cd $file/F_code
+    sed -i "s/\(\#include.*$\)/\1\n#undef eif_access\n#define eif_access(x) (x)\n/g" E1/epattern.c
+    finish_freezing
+    cd ../../../
+done
