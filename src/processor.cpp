@@ -22,6 +22,55 @@ processor::processor(spid_t _pid,
   active_count++;
 }
 
+// This is a modified RTE_T with no `start' label
+#define RTE_T_QS              \
+  saved_except = RTLA;        \
+  exvect->ex_jbuf = &exenv;   \
+  if (!setjmp(exenv)) {
+
+void
+processor::try_call (priv_queue_t *pq, call_data *call)
+{
+  // This commented section slows down some benchmarks by 2x. I believe
+  // this is due to either some locking in the allocation routines (again)
+  // or reloading the thread local variables often.
+
+  // This is too slow (I think). Let's just memorize it once then reuse that.
+  // if (!globals)
+  //   {
+  //     GTCX;
+  //     globals = eif_globals;
+  //   }
+
+  // {
+  //   eif_global_context_t *eif_globals = globals;
+
+  //   EIF_REFERENCE EIF_VOLATILE saved_except = (EIF_REFERENCE) 0;
+  //   RTEX;
+  //   RTED;
+  //   RTEV;
+  //   RTE_T_QS;
+  //   eif_try_call (call_data);
+  //   RTE_E;
+  //   pq->dirty = true;
+  //   RTE_EE;
+  // }
+
+
+  // This just shows that the jmp_buf isn't the bottle-neck: this is fast.
+
+  jmp_buf buf;
+  
+  if (!setjmp(buf))
+    {
+      eif_try_call (call);
+    }
+  else
+    {
+      pq->dirty = true;
+    }
+}
+
 void
 processor::process_priv_queue(priv_queue_t *pq)
 {
@@ -34,7 +83,8 @@ processor::process_priv_queue(priv_queue_t *pq)
           return;
         }
 
-      eif_try_call (executing_call);
+      try_call (pq, executing_call);
+      // eif_try_call (executing_call);
 
       if (call_data_sync_pid (executing_call) != NULL_PROCESSOR_ID)
         {

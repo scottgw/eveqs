@@ -79,6 +79,9 @@ public:
   bool has_backing_thread;
   spid_t pid;
   void* parent_obj;
+  eif_global_context_t *globals;
+  void try_call (priv_queue_t*, call_data*);
+
 
   // private stuff, no particular grouping
 private:

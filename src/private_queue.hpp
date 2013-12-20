@@ -22,7 +22,7 @@ public:
 
   bool synced;
   priv_queue_inner q;
-
+  bool dirty;
 
   // GC interaction
 public:
