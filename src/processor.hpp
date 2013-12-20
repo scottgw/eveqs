@@ -3,6 +3,7 @@
 #include <memory>
 #include <stack>
 #include <mutex>
+#include <queue>
 #include <condition_variable>
 #include <unordered_map>
 #include "qoq.hpp"
@@ -10,8 +11,8 @@
 #include "private_queue.hpp"
 #include "req_grp.hpp"
 #include "spsc.hpp"
-
-typedef tbb::concurrent_bounded_queue <processor_t*> waiters_t;                 
+#include "eveqs.h"
+#include "notify_token.hpp"
 
 typedef tbb::concurrent_bounded_queue <void*> notifier_queue;
 
@@ -55,14 +56,13 @@ public:
 
   // registration for wait condition notification
 public:
-  void register_wait(processor_t *proc);
-  void notify_next(processor_t *current_client);
+  void register_notify_token(notify_token token);
+  notify_token my_token;
 
-  std::mutex notify_mutex;
-  std::condition_variable notify_cv;
-  processor *waiter;
-  notifier wait_cond_notify;
-  
+private:
+  std::queue <notify_token> token_queue;
+  void notify_next(processor *);
+
   // GC interaction
 public:
   bool has_client;   // activity flag for the GC
@@ -82,10 +82,8 @@ public:
   eif_global_context_t *globals;
   void try_call (priv_queue_t*, call_data*);
 
-
   // private stuff, no particular grouping
 private:
-  waiters_t waiters;
   void process_priv_queue(priv_queue_t*);
   std::unordered_map <processor_t*, priv_queue_t*> queue_cache;
 };

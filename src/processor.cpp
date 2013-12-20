@@ -14,6 +14,7 @@ std::atomic<int> active_count = ATOMIC_VAR_INIT (0);
 processor::processor(spid_t _pid,
                      bool _has_backing_thread,
                      void* _parent_obj) :
+  my_token (this),
   executing_call (NULL),
   has_backing_thread (_has_backing_thread),
   pid(_pid),
@@ -119,19 +120,29 @@ processor::spawn()
 }
 
 void
-processor::register_wait(processor_t *proc)
+processor::register_notify_token (notify_token token)
 {
-  eif_lock lock (notify_mutex);
-  waiter = proc;
-  notify_cv.wait (lock, [&](){return waiter != proc;});
+  token_queue.push (token);
 }
 
 void
-processor::notify_next(processor_t *current_client)
+processor::notify_next(processor *client)
 {
-  eif_lock lock (notify_mutex);
-  waiter = current_client;
-  notify_cv.notify_all();
+  auto n = token_queue.size();
+  for (auto i = 0; i < 10 && !token_queue.empty(); i++)
+    {
+      auto token = token_queue.front();
+      token_queue.pop();
+
+      if (token.client() == client)
+        {
+          token_queue.push(token);
+        }
+      else
+        {
+          token.notify(client);
+        }
+    }
 }
 
 void

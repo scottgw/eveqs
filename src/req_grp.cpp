@@ -20,12 +20,14 @@ req_grp::add(processor_t *supplier)
 void
 req_grp::wait()
 {
-  unlock();
-
   for (auto &pq : *this)
     {
       pq->register_wait();
     }
+
+  unlock();
+
+  client->my_token.wait();
 }
 
 void

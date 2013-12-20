@@ -28,7 +28,7 @@ priv_queue::lock()
 void
 priv_queue::register_wait()
 {
-  supplier->register_wait(client);
+  client->my_token.register_supplier(supplier);
   synced = false;
 }
 

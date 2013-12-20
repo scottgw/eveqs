@@ -7,6 +7,8 @@ libeveqs_la_SOURCES = \
 	global.cpp \
 	global.hpp \
 	internal.hpp \
+	notify_token.hpp \
+	notify_token.cpp \
 	private_queue.cpp \
 	private_queue.hpp \
 	processor.cpp \
