@@ -105,6 +105,7 @@ spawn_main(char* data, spid_t pid)
 {
   processor_t *proc = registry [pid];
   proc->application_loop();
+  registry.return_processor (proc);
 }
 
 
@@ -179,8 +180,6 @@ processor::application_loop()
           break;
         }
     }
-
-  registry.return_pid (this->pid);
 }
 
 priv_queue_t*

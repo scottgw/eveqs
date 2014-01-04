@@ -8,6 +8,7 @@
 #include <condition_variable>
 #include <eif_macros.h>
 #include <eif_scoop.h>
+#include <iostream>
 #include <mutex>
 #include <stdlib.h>
 #include <tbb/concurrent_hash_map.h>
@@ -16,14 +17,18 @@
 
 processor_registry registry;
 
-
 processor_registry::processor_registry ()
 {
   for (spid_t i = 1; i < MAX_PROCS; i++)
     {
       free_pids.push (i);
     }
-    
+
+  for (spid_t i = 0; i < MAX_PROCS; i++)
+    {
+      procs [i] = NULL;
+    }
+
   used_pids.add(0);
 
   processor *root_proc = new processor(0);
@@ -43,8 +48,7 @@ processor_registry::create_fresh (void* obj)
 {
   spid_t pid = 0;
   processor *proc;
-
-  assert (free_pids.try_pop (pid));
+  bool success = free_pids.try_pop (pid);
 
   proc = new processor(pid, false, obj);
   procs[pid] = proc;
@@ -63,11 +67,12 @@ processor_registry::operator[] (spid_t pid)
 }
 
 void
-processor_registry::return_pid (spid_t pid)
+processor_registry::return_processor (processor *proc)
 {
+  spid_t pid = proc->pid;
   if (used_pids.erase (pid))
     {
-      delete procs [pid];
+      delete proc;
       procs [pid] = NULL;
 
       if (used_pids.size() == 0)
@@ -77,7 +82,11 @@ processor_registry::return_pid (spid_t pid)
 	  all_done_cv.notify_one();
 	}
 
-      free_pids.push (pid);
+      // pid 0 is special so we don't recycle that one.
+      if (pid)
+	{
+	  free_pids.push (pid);
+	}
     }
   else
     {
@@ -141,6 +150,7 @@ processor_registry::wait_for_all()
   processor *root_proc = (*this)[0];
   root_proc->has_client = false;
   root_proc->application_loop();
+  return_processor (root_proc);
 
   while(!all_done)
     {

@@ -37,7 +37,7 @@ public:
   operator[] (spid_t pid);
 
   void
-  return_pid (spid_t pid);
+  return_processor (processor* proc);
 
   // GC activities
 public:
