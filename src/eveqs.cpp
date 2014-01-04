@@ -9,7 +9,7 @@ extern "C"
   void
   eveqs_req_grp_new (spid_t client_pid)
   {
-    processor_t *client = processor_get (client_pid);
+    processor_t *client = registry [client_pid];
     client->group_stack.push(req_grp(client));
   }
 
@@ -17,7 +17,7 @@ extern "C"
   void
   eveqs_req_grp_delete (spid_t client_pid)
   {
-    processor_t *client = processor_get (client_pid);
+    processor_t *client = registry [client_pid];
     client->group_stack.top().unlock();
     client->group_stack.pop();
   }
@@ -26,7 +26,7 @@ extern "C"
   void
   eveqs_req_grp_wait (spid_t client_pid)
   {
-    processor_t *client = processor_get (client_pid);
+    processor_t *client = registry [client_pid];
     client->group_stack.top().wait();
   }
 
@@ -34,8 +34,8 @@ extern "C"
   void
   eveqs_req_grp_add_supplier (spid_t client_pid, spid_t supplier_pid)
   {
-    processor_t *client = processor_get (client_pid);
-    processor_t *supplier = processor_get (supplier_pid);  
+    processor_t *client = registry [client_pid];
+    processor_t *supplier = registry [supplier_pid];  
     client->group_stack.top().add (supplier);
   }
 
@@ -43,7 +43,7 @@ extern "C"
   void
   eveqs_req_grp_lock (spid_t client_pid)
   {
-    processor_t *client = processor_get (client_pid);
+    processor_t *client = registry [client_pid];
     client->group_stack.top().lock();
   }
 
@@ -55,7 +55,7 @@ extern "C"
   void
   eveqs_processor_fresh (void *obj)
   {
-    processor_fresh (obj);
+    registry.create_fresh (obj);
   }
 
   //
@@ -74,8 +74,8 @@ extern "C"
   int
   eveqs_is_synced_on (spid_t client_pid, spid_t supplier_pid)
   {
-    processor_t *client = processor_get (client_pid);
-    processor_t *supplier = processor_get (supplier_pid);  
+    processor_t *client = registry [client_pid];
+    processor_t *supplier = registry [supplier_pid];  
 
     priv_queue_t *pq = client->find_queue_for (supplier);
     return pq->synced;
@@ -88,24 +88,24 @@ extern "C"
   void
   eveqs_unmarked(spid_t pid)
   {
-    processor_unmark (pid);
+    registry.unmark (pid);
   }
 
   void
   eveqs_enumerate_live()
   {
-    processor_enumerate_live();
+    registry.enumerate_live();
   }
 
   void
   eveqs_wait_for_all()
   {
-    processor_wait_for_all();
+    registry.wait_for_all();
   }
 
   void
   eveqs_mark_all (marker_t mark)
   {
-    processor_mark_all (mark);
+    registry.mark_all (mark);
   }
 }

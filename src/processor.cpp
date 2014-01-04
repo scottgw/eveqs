@@ -103,7 +103,7 @@ processor::process_priv_queue(priv_queue_t *pq)
 void
 spawn_main(char* data, spid_t pid)
 {
-  processor_t *proc = processor_get(pid);
+  processor_t *proc = registry [pid];
   proc->application_loop();
 }
 
@@ -180,7 +180,7 @@ processor::application_loop()
         }
     }
 
-  processor_free_id (this);
+  registry.return_pid (this->pid);
 }
 
 priv_queue_t*
