@@ -26,9 +26,9 @@ processor_registry::processor_registry ()
     
   used_pids.add(0);
 
-  processor *root_proc;
-  root_proc = new processor(0);
+  processor *root_proc = new processor(0);
   root_proc->has_client = true;
+
   procs[0] = root_proc;
 
   // end of life notification
@@ -65,19 +65,24 @@ processor_registry::operator[] (spid_t pid)
 void
 processor_registry::return_pid (spid_t pid)
 {
-  used_pids.erase (pid);
-
-  delete procs [pid];
-  procs [pid] = NULL;
-
-  if (used_pids.size() == 0)
+  if (used_pids.erase (pid))
     {
-      std::unique_lock<std::mutex> lock(all_done_mutex);
-      all_done = true;
-      all_done_cv.notify_one();
-    }
+      delete procs [pid];
+      procs [pid] = NULL;
 
-  free_pids.push (pid);
+      if (used_pids.size() == 0)
+	{
+	  std::unique_lock<std::mutex> lock(all_done_mutex);
+	  all_done = true;
+	  all_done_cv.notify_one();
+	}
+
+      free_pids.push (pid);
+    }
+  else
+    {
+      assert (0 & "return_pid: shouldn't be here");
+    }
 }
 
 // GC activities
@@ -145,7 +150,6 @@ processor_registry::wait_for_all()
 			   [&](){return all_done;});
     }
 }
-
 
 void
 call_on (spid_t client_pid, spid_t supplier_pid, void* data)
