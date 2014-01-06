@@ -3,12 +3,12 @@ class CHAMENEOS
 create make
 
 feature
-	c: Integer
+	c: INTEGER
 	broker: separate BROKER
 	signal: separate SIGNAL
-	max: Integer
+	max: INTEGER
 
-	make(c_: Integer; broker_: separate BROKER; signal_: separate SIGNAL; max_: Integer)
+	make(c_: INTEGER; broker_: separate BROKER; signal_: separate SIGNAL; max_: INTEGER)
 		do
 			c := c_
 			broker := broker_
@@ -16,7 +16,7 @@ feature
 			max := max_
 		end
 
-	compl(c1: Integer; c2: Integer): Integer
+	compl(c1: INTEGER; c2: INTEGER): INTEGER
 		do
 			if c1 = 0 then
 				if c2 = 0 then
@@ -47,7 +47,7 @@ feature
 
 	request_meeting()
 		local
-			met: Boolean
+			met: BOOLEAN
 		do
 			from met := True
 			until not met
@@ -67,9 +67,9 @@ feature
 	-- These are basically just to communicate between `contact_broker'
 	-- and `request_meeting'
 	other_cham: separate CHAMENEOS
-	other_c: Integer
-	n: Integer
-	
+	other_c: INTEGER
+	n: INTEGER
+
 	meet_other(a_other_cham: separate CHAMENEOS)
 		do
 			a_other_cham.meet_with(c, n, True)
@@ -85,11 +85,17 @@ feature
 				a_broker.clear().do_nothing()
 			end
 		end	 
-	 
-	meet_with(a_other_c: Integer; a_n: Integer; restart: Boolean)
+
+	meet_with(a_other_c: INTEGER; a_n: INTEGER; restart: BOOLEAN)
 		do
 			c := compl(c, a_other_c)
+
+			if a_n \\ 100000 = 0 then
+				print ("chameneos " + a_n.out + " / " + max.out + "%N")
+			end
+
 			if a_n >= max then
+				print ("chameneos finished " + max.out + "%N")
 				send_signal (signal)
 			elseif restart then
 				request_meeting()
@@ -100,5 +106,4 @@ feature
 		do
 			a_signal.signal()
 		end
-	 
 end

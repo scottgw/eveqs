@@ -14,8 +14,6 @@ create
 
 feature {NONE} -- Initialization
 	num_passes: INTEGER
-	workers: ARRAYED_LIST [separate CHAMENEOS]
-			
 	
 	make
 		local
@@ -24,9 +22,7 @@ feature {NONE} -- Initialization
 			n: Integer
 		do
 			n := argument(1).to_integer
-			create workers.make (10)
-			
-			-- n := 600000
+
 			create chms1.make(3)
 			chms1.extend(0)
 			chms1.extend(1)
@@ -54,31 +50,20 @@ feature {NONE} -- Initialization
 			signal: separate SIGNAL
 			worker: separate CHAMENEOS
 			broker: separate BROKER
-			-- workers: ARRAYED_LIST [separate CHAMENEOS]
 			i: INTEGER
 		do
 			create signal.make()
 			create broker.make(n)
-			-- create workers.make(chms.count)
 
 			from i := 1
 			until i > chms.count
 			loop
 				create worker.make(chms[i], broker, signal, n)
 				worker_request_meeting (worker)
-				workers.extend(worker)
 				i := i + 1
 			end
 
-			-- from i := 0
-			-- until i >= chms.count
-			-- loop
-			--   shutdown workers.item(i)
-			--   i := i + 1
-			-- end
-			-- shutdown signal
-			-- shutdown broker
-			-- signal_wait (signal)
+			signal_wait (signal)
 		end
 
 	worker_request_meeting (a_worker: separate CHAMENEOS)
