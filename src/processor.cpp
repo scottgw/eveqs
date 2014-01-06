@@ -8,19 +8,19 @@
 #include <eif_posix_threads.h>
 #include <eif_threads.h>
 #include <stdarg.h>
+#include <cassert>
 
 std::atomic<int> active_count = ATOMIC_VAR_INIT (0);
 
 processor::processor(spid_t _pid,
-                     bool _has_backing_thread,
-                     void* _parent_obj) :
+                     bool _has_backing_thread) :
   group_stack (),
   my_token (this),
   token_queue (),
   executing_call (NULL),
   has_backing_thread (_has_backing_thread),
   pid(_pid),
-  parent_obj (_parent_obj)
+  parent_obj (std::make_shared<nullptr_t>(nullptr))
 {
   active_count++;
 }
@@ -114,7 +114,7 @@ spawn_main(char* data, spid_t pid)
 void
 processor::spawn()
 {
-  eif_thr_create_with_attr_new ((char**)parent_obj, // No root object, if this is only
+  eif_thr_create_with_attr_new ((char**)parent_obj.get(), // No root object, if this is only
                                                     // passed to spawn_main this is OK
                                 (void (*)(char* data, ...)) spawn_main,
                                 pid, // Logical PID

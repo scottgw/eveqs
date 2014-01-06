@@ -49,10 +49,8 @@ processor_registry::create_fresh (void* obj)
   spid_t pid = 0;
   processor *proc;
   bool success = free_pids.try_pop (pid);
-  void **zero_obj = new void*;
-  *zero_obj = 0;
 
-  proc = new processor(pid, false, zero_obj);
+  proc = new processor(pid, false);
   procs[pid] = proc;
   RTS_PID(obj) = pid;
 

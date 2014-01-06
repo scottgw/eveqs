@@ -34,8 +34,7 @@ class processor
 {
 public:
   processor(spid_t _pid,
-            bool _has_backing_thread = false,
-            void* _parent_obj = NULL);
+            bool _has_backing_thread = false);
 
   // lifetime operations
   void application_loop();
@@ -78,7 +77,7 @@ public:
   void spawn();
   bool has_backing_thread;
   spid_t pid;
-  void* parent_obj;
+  std::shared_ptr<nullptr_t> parent_obj;
   eif_global_context_t *globals;
   void try_call (priv_queue_t*, call_data*);
 
