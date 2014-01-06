@@ -14,7 +14,9 @@ std::atomic<int> active_count = ATOMIC_VAR_INIT (0);
 processor::processor(spid_t _pid,
                      bool _has_backing_thread,
                      void* _parent_obj) :
+  group_stack (),
   my_token (this),
+  token_queue (),
   executing_call (NULL),
   has_backing_thread (_has_backing_thread),
   pid(_pid),
@@ -213,8 +215,10 @@ processor::mark(marker_t mark)
       mark_call_data (mark, executing_call);
     }
 
-  for (auto &pq : queue_cache)
+  for (auto &pq_pair : queue_cache)
     {
-      pq.second->mark (mark);
+      priv_queue *pq = pq_pair.second;
+      assert (pq_pair.first == pq->supplier);
+      pq->mark (mark);
     }
 }

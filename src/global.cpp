@@ -49,8 +49,10 @@ processor_registry::create_fresh (void* obj)
   spid_t pid = 0;
   processor *proc;
   bool success = free_pids.try_pop (pid);
+  void **zero_obj = new void*;
+  *zero_obj = 0;
 
-  proc = new processor(pid, false, obj);
+  proc = new processor(pid, false, zero_obj);
   procs[pid] = proc;
   RTS_PID(obj) = pid;
 
@@ -63,7 +65,9 @@ processor*
 processor_registry::operator[] (spid_t pid)
 {
   assert (used_pids.has (pid));
-  return procs[pid];
+  processor *proc = procs[pid];
+  assert (proc & "processor_registry: processor retreived was NULL");
+  return proc;
 }
 
 void
@@ -80,6 +84,10 @@ processor_registry::return_processor (processor *proc)
 	  std::unique_lock<std::mutex> lock(all_done_mutex);
 	  all_done = true;
 	  all_done_cv.notify_one();
+	}
+      else if (used_pids.size() == 1)
+	{
+	  (*this)[0]->shutdown();
 	}
 
       // pid 0 is special so we don't recycle that one.
