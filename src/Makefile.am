@@ -4,8 +4,8 @@ libeveqs_la_SOURCES = \
 	eif_utils.cpp \
 	eif_utils.hpp \
 	eveqs.cpp \
-	global.cpp \
-	global.hpp \
+	processor_registry.cpp \
+	processor_registry.hpp \
 	internal.hpp \
 	notify_token.hpp \
 	notify_token.cpp \

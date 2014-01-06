@@ -1,6 +1,6 @@
 #include "eif_utils.hpp"
 #include "eveqs.h"
-#include "global.hpp"
+#include "processor_registry.hpp"
 #include "processor.hpp"
 
 extern "C"
