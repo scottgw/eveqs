@@ -170,9 +170,9 @@ public:
   }
 
   void
-  pop(T &v)
+  pop(T &v, int spin = 512)
   {
-    for (int i = 0; i < 512; i++)
+    for (int i = 0; i < spin; i++)
       {
         if (q.dequeue(v))
           {

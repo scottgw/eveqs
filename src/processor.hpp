@@ -18,7 +18,7 @@ struct notifier : spsc <void*> {
   void wait ()
   {
     void* dummy;
-    this->pop(dummy);
+    this->pop(dummy, 64);
   }
 
   void wake ()
