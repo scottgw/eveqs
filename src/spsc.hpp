@@ -33,7 +33,6 @@
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
-#include <tbb/tbb_allocator.h>
 
 #define __memory_barrier() atomic_thread_fence (std::memory_order_seq_cst)
 
@@ -71,7 +70,7 @@ class spsc_queue_impl
 public:
   spsc_queue_impl()
   {
-    node* n = allocator.allocate(1);
+    node* n = new node();
     n->next_ = 0;
     tail_ = head_ = first_= tail_copy_ = n;
   }
@@ -82,7 +81,7 @@ public:
     do
       {
         node* next = n->next_;
-        allocator.deallocate(n, 1);
+        delete n;
         n = next;
       }
     while (n);
@@ -154,11 +153,9 @@ private:
         first_ = first_->next_;
         return n;
       }
-    node* n = allocator.allocate(1);;
+    node* n = new node();
     return n;
   }
-
-  tbb::tbb_allocator<node> allocator;
 
   spsc_queue_impl(spsc_queue_impl const&);
   spsc_queue_impl & operator = (spsc_queue_impl const&);

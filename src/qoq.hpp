@@ -38,7 +38,6 @@
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
-#include <tbb/tbb_allocator.h>
 #include "eif_utils.hpp"
 
 template <typename V>
@@ -54,7 +53,7 @@ class mpscq
 public:
   mpscq()
   {
-    mpscq_node <V> * stub = allocator.allocate(1);
+    mpscq_node <V> * stub = new mpscq_node<V>();
     stub->next = 0;
     head_ = stub;
     tail_ = stub;
@@ -63,7 +62,7 @@ public:
   void
   push(V v)
   {
-    mpscq_node <V> * node = allocator.allocate(1);
+    mpscq_node <V> * node = new mpscq_node<V>();
     node->state = v;
 
     push_(node);
@@ -97,7 +96,7 @@ public:
 
   cleanup:
     v = node->state;    
-    allocator.deallocate (node, 1);
+    delete node;
   }
 
 private:
@@ -126,7 +125,6 @@ private:
 private:
   std::atomic<mpscq_node <V>*> volatile  head_;
   mpscq_node <V> *           tail_;
-  tbb::tbb_allocator <mpscq_node<V> > allocator;
 
 private: // Synchronization structures
   std::mutex mutex;

@@ -1,7 +1,6 @@
 #ifndef _EIF_UTILS_H
 #define _EIF_UTILS_H
 #include <mutex>
-#include <tbb/concurrent_queue.h>
 #include "eif_macros.h"
 
 typedef EIF_REFERENCE marker_t(EIF_REFERENCE *);
@@ -33,44 +32,5 @@ public:
     std::unique_lock <std::mutex> (mutex)
   {}
 };
-
-#define SPIN 64
-
-template <class V>
-void
-eif_push(tbb::concurrent_bounded_queue<V> *q, const V &val)
-{
-  for (int i = 0; i < SPIN; i++)
-    {
-      if (q->try_push(val))
-        {
-          return;
-        }
-    }
-
-  {
-    eif_block_token token;
-    q->push(val);
-  }
-}
-
-
-template <class V>
-void
-eif_pop(tbb::concurrent_bounded_queue<V> *q, V &val)
-{
-  for (int i = 0; i < SPIN; i++)
-    {
-      if (q->try_pop(val))
-        {
-          return;
-        }
-    }
-
-  {
-    eif_block_token token;
-    q->pop(val);
-  }
-}
 
 #endif // _EIF_UTILS_H

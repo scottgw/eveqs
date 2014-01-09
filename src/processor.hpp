@@ -14,19 +14,17 @@
 #include "eveqs.h"
 #include "notify_token.hpp"
 
-typedef tbb::concurrent_bounded_queue <void*> notifier_queue;
-
-struct notifier : notifier_queue {
+struct notifier : spsc <void*> {
   void wait ()
   {
     void* dummy;
-    eif_pop(static_cast<notifier_queue*> (this), dummy);
+    this->pop(dummy);
   }
 
   void wake ()
   {
     void* dummy = NULL;
-    eif_push(static_cast<notifier_queue*> (this), dummy);
+    this->push(dummy);
   }
 };
 

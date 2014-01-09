@@ -1,27 +1,56 @@
 #ifndef _GLOBAL_H
 #define _GLOBAL_H
 
+#include <atomic>
+#include "mpmc.hpp"
 #include "processor.hpp"
-#include <tbb/concurrent_hash_map.h>
-#include <tbb/concurrent_queue.h>
 
 #define MAX_PROCS 1024
 
-
-// typedef tbb::concurrent_hash_map <spid_t, bool> pid_set_t;
-
-class pid_set : public tbb::concurrent_hash_map <spid_t, bool>
+class pid_set
 {
 public:
+  pid_set()
+  {
+    size_ = 0;
+    for (int i = 0; i < MAX_PROCS; i++)
+      {
+	proc_set [i] = false;
+      }
+  }
+
   void add (spid_t pid)
   {
-    insert (std::pair<spid_t, bool> (pid, true));
+    bool expected = false;
+    if (proc_set [pid].compare_exchange_strong (expected, true))
+      {
+	size_++;
+      }
   }
 
   bool has (spid_t pid)
   {
-    return count(pid) > 0;
+    return proc_set [pid];
   }
+
+  bool erase (spid_t pid)
+  {
+    bool result = proc_set [pid].exchange (false);
+    if (result)
+      {
+	size_--;
+      }
+    return result;
+  }
+
+  size_t size() const 
+  {
+    return size_;
+  }
+
+private:
+  std::atomic<size_t> size_;
+  std::atomic<bool> proc_set [MAX_PROCS];
 };
 
 
@@ -56,7 +85,7 @@ public:
 private:
   processor* procs[MAX_PROCS];
   pid_set used_pids;
-  tbb::concurrent_queue<spid_t> free_pids;
+  mpmc_bounded_queue<spid_t> free_pids;
 
   // GC
 private:

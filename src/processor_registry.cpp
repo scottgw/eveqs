@@ -11,17 +11,17 @@
 #include <iostream>
 #include <mutex>
 #include <stdlib.h>
-#include <tbb/concurrent_hash_map.h>
 
 #define MAX_PROCS 1024
 
 processor_registry registry;
 
-processor_registry::processor_registry ()
+processor_registry::processor_registry () :
+  free_pids (MAX_PROCS)
 {
   for (spid_t i = 1; i < MAX_PROCS; i++)
     {
-      free_pids.push (i);
+      free_pids.enqueue (i);
     }
 
   for (spid_t i = 0; i < MAX_PROCS; i++)
@@ -48,7 +48,7 @@ processor_registry::create_fresh (void* obj)
 {
   spid_t pid = 0;
   processor *proc;
-  bool success = free_pids.try_pop (pid);
+  bool success = free_pids.dequeue (pid);
 
   proc = new processor(pid, false);
   procs[pid] = proc;
@@ -91,7 +91,7 @@ processor_registry::return_processor (processor *proc)
       // pid 0 is special so we don't recycle that one.
       if (pid)
 	{
-	  free_pids.push (pid);
+	  free_pids.enqueue (pid);
 	}
     }
   else
@@ -104,13 +104,16 @@ processor_registry::return_processor (processor *proc)
 void
 processor_registry::enumerate_live ()
 {
-  for (auto &pid : used_pids)
+  for (spid_t i = 0; i < MAX_PROCS ; i++)
     {
-      processor* proc = (*this) [pid.first];
-	
-      if (proc->has_client)
+      if (used_pids.has (i))
 	{
-	  eif_mark_live_pid (proc->pid);
+	  processor* proc = (*this) [i];
+	  
+	  if (proc->has_client)
+	    {
+	      eif_mark_live_pid (proc->pid);
+	    }
 	}
     }
 }
@@ -123,13 +126,14 @@ processor_registry::mark_all (marker_t mark)
 
   if (is_marking.compare_exchange_strong(f, true))
     {
-      for (auto &spid_pair : used_pids)
+      for (spid_t i = 0; i < MAX_PROCS ; i++)
 	{
-	  spid_t pid = spid_pair.first;
-	  processor *proc = (*this) [pid];
-	  proc->mark (mark);
+	  if (used_pids.has (i))
+	    {
+	      processor *proc = (*this) [i];
+	      proc->mark (mark);
+	    }
 	}
-
       is_marking = false;
     }
 }
