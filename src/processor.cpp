@@ -36,6 +36,7 @@ processor::processor(spid_t _pid,
                      bool _has_backing_thread) :
   group_stack (),
   my_token (this),
+  has_client (false),
   token_queue (),
   executing_call (NULL),
   has_backing_thread (_has_backing_thread),
