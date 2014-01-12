@@ -27,6 +27,7 @@
 priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
   client (_client),
   supplier (_supplier),
+  dirty (false),
   synced(false),
   q(),
   lock_depth(0)
