@@ -181,7 +181,7 @@ processor::application_loop()
       // program termination, but not sufficient for
       // freeing threads to let new ones take their
       // place.
-      if (--active_count == 0)
+      if (--active_count == 0 && qoq.is_empty())
         {
           plsc();
         }
