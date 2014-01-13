@@ -37,7 +37,7 @@ processor::processor(spid_t _pid,
   group_stack (),
   my_token (this),
   token_queue (),
-  has_client (false),
+  has_client (true),
   executing_call (NULL),
   has_backing_thread (_has_backing_thread),
   pid(_pid),
@@ -172,6 +172,7 @@ processor::notify_next(processor *client)
 void
 processor::application_loop()
 {
+  has_client = false;
   for (;;)
     {
       priv_queue_t *pq;
