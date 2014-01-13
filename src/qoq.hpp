@@ -99,6 +99,12 @@ public:
     delete node;
   }
 
+  bool
+  is_empty()
+  {
+    return tail_->next == 0;
+  }
+
 private:
   void push_(mpscq_node<V> * n)
   {
