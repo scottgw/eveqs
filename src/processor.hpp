@@ -93,7 +93,8 @@ public:
   // Interoperability with the ES runtime
 public:
   void spawn();
-  bool has_backing_thread;
+  volatile bool has_backing_thread;
+  notifier startup_notify;
   spid_t pid;
   std::shared_ptr<nullptr_t> parent_obj;
   void try_call (priv_queue_t*, call_data*);

@@ -202,12 +202,12 @@ call_on (spid_t client_pid, spid_t supplier_pid, void* data)
 
   if (!supplier->has_backing_thread)
     {
-      supplier->spawn();
-      supplier->has_backing_thread = true;
-
       pq->lock();
       pq->log_call (data);
       pq->unlock();
+
+      supplier->spawn();
+      supplier->startup_notify.wait();
     }
   else
     {
