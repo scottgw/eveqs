@@ -207,7 +207,7 @@ call_on (spid_t client_pid, spid_t supplier_pid, void* data)
       pq->unlock();
 
       supplier->spawn();
-      supplier->startup_notify.wait();
+      supplier->startup_notify.wait(NULL);
     }
   else
     {

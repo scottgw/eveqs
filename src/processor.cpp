@@ -114,7 +114,7 @@ processor::process_priv_queue(priv_queue_t *pq)
         {
           // We've processed the call so notify the client
           // that their result is ready.
-          pq->client->result_notify.wake();
+          pq->client->result_notify.wake(executing_call);
         }
 
       free (executing_call);

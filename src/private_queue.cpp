@@ -63,7 +63,7 @@ priv_queue::log_call(void *data)
 
   if (will_sync)
     {
-      client->result_notify.wait();
+      client->result_notify.wait(call);
     }
 
   synced = will_sync;

@@ -35,16 +35,20 @@
 #include "notify_token.hpp"
 
 struct notifier : spsc <void*> {
-  void wait ()
+
+  void wait (void *expected)
   {
-    void* dummy;
-    this->pop(dummy, 64);
+    void *result;
+    this->pop(result, 64);
+    if (result != expected)
+      {
+	printf ("Unexpected result!\n");
+      }
   }
 
-  void wake ()
+  void wake (void *finished = NULL)
   {
-    void* dummy = NULL;
-    this->push(dummy);
+    this->push(finished);
   }
 };
 
