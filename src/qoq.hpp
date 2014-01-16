@@ -68,7 +68,7 @@ public:
     push_(node);
 
     {
-      eif_lock lock (mutex);
+      std::unique_lock<std::mutex> lock (mutex);
       cv.notify_all();
     }
   }
