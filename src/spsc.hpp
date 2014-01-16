@@ -200,6 +200,18 @@ public:
     }
   }
 
+
+  int
+  size ()
+  {
+    int s = 0;
+    for (auto n = q.tail_->next_ ; n ; n = n->next_)
+      {
+        s++;
+      }
+    return s;
+  }
+
   void
   unsafe_map_ (std::function <void(T)> f)
   {
