@@ -24,7 +24,7 @@ BUILT_SOURCES = config.h
 include_HEADERS = eveqs.h
 
 FLAGS = -pthread \
-	-DEIF_THREADS -DEIF_POSIX_THREADS \
+	-DSCOOPQS -DEIF_THREADS -DEIF_POSIX_THREADS \
 	-I${HOME}/local/include \
 	-I${ISE_EIFFEL}/studio/spec/${ISE_PLATFORM}/include \
 	-Wall -Wno-unused-value -Wno-unused-variable -march=native
