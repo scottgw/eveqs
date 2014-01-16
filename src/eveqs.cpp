@@ -98,7 +98,7 @@ extern "C"
     processor_t *supplier = registry [supplier_pid];  
 
     priv_queue_t *pq = client->find_queue_for (supplier);
-    return pq->synced;
+    return pq->is_synced();
   }
 
   //

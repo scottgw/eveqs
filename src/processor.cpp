@@ -100,7 +100,7 @@ processor::process_priv_queue(priv_queue_t *pq)
 {
   for (;;)
     {
-      pq->q.pop(executing_call);
+      pq->pop_call (executing_call);
 
       if (executing_call == NULL)
         {

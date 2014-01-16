@@ -25,11 +25,10 @@
 #include "eif_utils.hpp"
 
 priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
+  spsc<call_data*>(),
   client (_client),
   supplier (_supplier),
   dirty (false),
-  synced(false),
-  q(),
   lock_depth(0)
 {
 }
@@ -37,13 +36,25 @@ priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
 void
 priv_queue::lock()
 {
-  lock_depth++;
+  // lock_depth++;
 
-  if (lock_depth == 1)
-    {
+  // if (lock_depth == 1)
+  //   {
       supplier->qoq.push(this);
       synced = false;
-    }
+    // }
+}
+
+bool
+priv_queue::is_synced()
+{
+  return synced;
+}
+
+void
+priv_queue::pop_call (call_data *&call)
+{
+  pop (call);
 }
 
 void
@@ -59,7 +70,7 @@ priv_queue::log_call(void *data)
   call_data *call = (call_data*) data;
   bool will_sync = call_data_sync_pid (call) != NULL_PROCESSOR_ID;
 
-  q.push (call);
+  push (call);
 
   if (will_sync)
     {
@@ -72,14 +83,13 @@ priv_queue::log_call(void *data)
 void
 priv_queue::unlock()
 {
-  lock_depth--;
+  // lock_depth--;
 
-  if (lock_depth == 0)
-    {
-      call_data *call = NULL;
-      q.push (call);
+  // if (lock_depth == 0)
+  //   {
+      push (NULL);
       synced = false;
-    }
+    // }
 }
 
 void
@@ -93,5 +103,5 @@ priv_queue::mark(marker_t mark)
             mark_call_data (mark, call);
           }
       };
-  q.unsafe_map_ (mark_call);
+  unsafe_map_ (mark_call);
 }

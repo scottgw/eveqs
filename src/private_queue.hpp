@@ -23,12 +23,10 @@
 #include "eif_utils.hpp"
 #include "spsc.hpp"
 
-typedef spsc<call_data*> priv_queue_inner;
-
 class processor;
 typedef class processor processor_t;
 
-class priv_queue
+class priv_queue : spsc <call_data*>
 {
 public:
   priv_queue (processor_t*, processor_t*);
@@ -37,11 +35,12 @@ public:
   
   void lock();
   void log_call(void*);
+  void pop_call (call_data *&);
   void register_wait();
   void unlock();
 
-  bool synced;
-  priv_queue_inner q;
+  bool is_synced();
+
   bool dirty;
 
   // GC interaction
@@ -49,8 +48,8 @@ public:
   void mark (marker_t mark);
 
 private:
+  bool synced;
   int lock_depth;
-
 };
 
 
