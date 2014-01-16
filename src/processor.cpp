@@ -211,16 +211,16 @@ processor::application_loop()
 priv_queue_t*
 processor::find_queue_for(processor_t *supplier)
 {
-  auto queue_maybe = queue_cache.find (supplier);
-  if (queue_maybe == queue_cache.end())
+  if (queue_cache.count (supplier))
     {
-      priv_queue_t *pq = new priv_queue (this, supplier);
-      queue_cache[supplier] = pq;
-      return pq;
+      return queue_cache [supplier];
     }
   else
     {
-      return queue_maybe->second;
+      priv_queue_t *pq = new priv_queue (this, supplier);
+      printf ("creating new priv queue from %d to %d\n", pid, supplier->pid);
+      queue_cache[supplier] = pq;
+      return pq;
     }
 }
 
