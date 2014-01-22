@@ -47,7 +47,21 @@ public:
 	base_map [supplier] = pq;
 	return pq;
       }
-}
+  }
+
+  bool
+  has_locked (processor *proc)
+  {
+    for (auto qmap : maps)
+      {
+	if (qmap->count (proc) && (*qmap)[proc]->is_locked())
+	  {
+	    return true;
+	  }
+      }
+
+    return base_map.count (proc) && base_map[proc]->is_locked();
+  }
   
 public:
   void
