@@ -41,7 +41,7 @@ processor::processor(spid_t _pid,
   executing_call (NULL),
   has_backing_thread (_has_backing_thread),
   pid(_pid),
-  parent_obj (std::make_shared<nullptr_t>(nullptr))
+  parent_obj (std::make_shared<std::nullptr_t>(nullptr))
 {
   active_count++;
 }
@@ -127,6 +127,7 @@ void
 spawn_main(char* data, spid_t pid)
 {
   processor_t *proc = registry [pid];
+  (void)data;
   proc->has_backing_thread = true;
   proc->startup_notify.wake();
   proc->application_loop();
@@ -155,7 +156,7 @@ void
 processor::notify_next(processor *client)
 {
   auto n = token_queue.size();
-  for (auto i = 0; i < 10 && !token_queue.empty(); i++)
+  for (auto i = 0U; i < n && !token_queue.empty(); i++)
     {
       auto token = token_queue.front();
       token_queue.pop();
@@ -218,7 +219,6 @@ processor::find_queue_for(processor_t *supplier)
   else
     {
       priv_queue_t *pq = new priv_queue (this, supplier);
-      printf ("creating new priv queue from %d to %d\n", pid, supplier->pid);
       queue_cache[supplier] = pq;
       return pq;
     }

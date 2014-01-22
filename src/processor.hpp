@@ -100,7 +100,7 @@ public:
   volatile bool has_backing_thread;
   notifier startup_notify;
   spid_t pid;
-  std::shared_ptr<nullptr_t> parent_obj;
+  std::shared_ptr<std::nullptr_t> parent_obj;
   void try_call (priv_queue_t*, call_data*);
 
   // private stuff, no particular grouping
