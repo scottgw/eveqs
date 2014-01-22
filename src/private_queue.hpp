@@ -34,7 +34,7 @@ public:
   processor_t* supplier;
   
   void lock();
-  void log_call(void*);
+  void log_call(call_data*);
   void pop_call (call_data *&);
   void register_wait();
   void unlock();

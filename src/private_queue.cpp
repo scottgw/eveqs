@@ -29,6 +29,7 @@ priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
   client (_client),
   supplier (_supplier),
   dirty (false),
+  synced (false),
   lock_depth(0)
 {
 }
@@ -65,9 +66,8 @@ priv_queue::register_wait()
 }
 
 void
-priv_queue::log_call(void *data)
+priv_queue::log_call(call_data *call)
 {
-  call_data *call = (call_data*) data;
   bool will_sync = call_data_sync_pid (call) != NULL_PROCESSOR_ID;
 
   push (call);

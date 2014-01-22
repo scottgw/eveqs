@@ -198,25 +198,3 @@ processor_registry::wait_for_all()
 			   [&](){return all_done;});
     }
 }
-
-void
-call_on (spid_t client_pid, spid_t supplier_pid, void* data)
-{
-  processor_t *client = registry [client_pid];
-  processor_t *supplier = registry [supplier_pid];
-  priv_queue_t *pq = client->find_queue_for (supplier);
-
-  if (!supplier->has_backing_thread)
-    {
-      pq->lock();
-      pq->log_call (data);
-      pq->unlock();
-
-      supplier->spawn();
-      supplier->startup_notify.wait(NULL);
-    }
-  else
-    {
-      pq->log_call (data);
-    }
-}

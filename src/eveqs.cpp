@@ -82,14 +82,29 @@ extern "C"
   // Call logging
   //
 
-  // eif_log_call
   void
   eveqs_call_on (spid_t client_pid, spid_t supplier_pid, void* data)
   {
-    // FIXME: do as before and get both the client and supplier and turn into
-    // a proper call on the client?
-    call_on (client_pid, supplier_pid, data);
+    call_data *call = (call_data*) data;
+    processor_t *client = registry [client_pid];
+    processor_t *supplier = registry [supplier_pid];
+    priv_queue_t *pq = client->find_queue_for (supplier);
+
+    if (!supplier->has_backing_thread)
+      {
+	pq->lock();
+	pq->log_call (call);
+	pq->unlock();
+
+	supplier->spawn();
+	supplier->startup_notify.wait(NULL);
+      }
+    else
+      {
+	pq->log_call (call);
+      }
   }
+
 
   int
   eveqs_is_synced_on (spid_t client_pid, spid_t supplier_pid)
