@@ -25,6 +25,7 @@
 #include "private_queue.hpp"
 #include "processor.hpp"
 #include <atomic>
+#include <algorithm>
 #include <eif_posix_threads.h>
 #include <eif_threads.h>
 #include <stdarg.h>
@@ -34,6 +35,7 @@ std::atomic<int> active_count = ATOMIC_VAR_INIT (0);
 
 processor::processor(spid_t _pid,
                      bool _has_backing_thread) :
+  subordinates (),
   cache (this),
   group_stack (),
   my_token (this),
@@ -46,6 +48,25 @@ processor::processor(spid_t _pid,
 {
   active_count++;
 }
+
+void
+processor::push_subordinate (processor *proc)
+{
+  subordinates.push_back (proc);
+}
+
+void
+processor::pop_subordinate ()
+{
+  subordinates.pop_back();
+}
+
+bool
+processor::has_subordinate (processor *proc)
+{
+  return std::count (subordinates.begin(), subordinates.end(), proc) > 0;
+}
+
 
 // This is a modified RTE_T with no `start' label
 #define RTE_T_QS              \

@@ -99,6 +99,26 @@ extern "C"
 	supplier->spawn();
 	supplier->startup_notify.wait(NULL);
       }
+    else if (call_data_is_lock_passing (call))
+      {
+	// 0) wait for previous calls to settle? not necessary,
+	//    because we're using the exactly same as the client was?
+
+	// FIXME: merge the two push and pop pairs into a single pair
+	//        in the processor
+	// 1) add the client to the supplier's "total ownership" stack
+	supplier->push_subordinate (client);
+	// 2) merge all the private queues in the client's request group stack
+	//    into the cache of the supplier
+	supplier->cache.push (&client->cache);
+	pq->log_call (call);
+	supplier->cache.pop ();
+	supplier->pop_subordinate ();
+      }
+    else if (client->has_subordinate (supplier))
+      {
+	eif_try_call (call);
+      }
     else
       {
 	pq->log_call (call);
