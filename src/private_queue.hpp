@@ -38,6 +38,7 @@ public:
   void pop_call (call_data *&);
   void register_wait();
   void unlock();
+  bool is_locked();
 
   bool is_synced();
 
