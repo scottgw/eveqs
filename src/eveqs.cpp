@@ -117,11 +117,13 @@ extern "C"
   }
 
   int
-  eveqs_is_uncontrolled(spid_t client_pid, spid_t supplier_pid)
+  eveqs_is_uncontrolled (spid_t client_pid, spid_t supplier_pid)
   {
-    return 1;
-  }
+    processor_t *client = registry [client_pid];
+    processor_t *supplier = registry [supplier_pid];
 
+    return client->cache.has_locked (supplier);
+  }
 
   //
   // Callback from garbage collector to indicate that the
