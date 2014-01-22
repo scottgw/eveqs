@@ -21,7 +21,7 @@
 #ifndef _PROCESSOR_H
 #define _PROCESSOR_H
 #include <memory>
-#include <stack>
+#include <vector>
 #include <mutex>
 #include <queue>
 #include <condition_variable>
@@ -74,7 +74,7 @@ public:
 
   // separate argument stacks
 public:
-  std::stack <req_grp> group_stack;
+  std::vector <req_grp> group_stack;
 
   // registration for wait condition notification
 public:
