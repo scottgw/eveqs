@@ -30,7 +30,7 @@ extern "C"
   eveqs_req_grp_new (spid_t client_pid)
   {
     processor_t *client = registry [client_pid];
-    client->group_stack.push(req_grp(client));
+    client->group_stack.push_back (req_grp(client));
   }
 
   // RTS_RD (o) - delete chain (release locks?)
@@ -38,8 +38,8 @@ extern "C"
   eveqs_req_grp_delete (spid_t client_pid)
   {
     processor_t *client = registry [client_pid];
-    client->group_stack.top().unlock();
-    client->group_stack.pop();
+    client->group_stack.back().unlock();
+    client->group_stack.pop_back();
   }
 
   // RTS_RF (o) - wait condition fails
@@ -47,7 +47,7 @@ extern "C"
   eveqs_req_grp_wait (spid_t client_pid)
   {
     processor_t *client = registry [client_pid];
-    client->group_stack.top().wait();
+    client->group_stack.back().wait();
   }
 
   // RTS_RS (c, s) - add supplier s to current group for c
@@ -56,7 +56,7 @@ extern "C"
   {
     processor_t *client = registry [client_pid];
     processor_t *supplier = registry [supplier_pid];  
-    client->group_stack.top().add (supplier);
+    client->group_stack.back().add (supplier);
   }
 
   // RTS_RW (o) - sort all suppliers in the group and get exclusive access
@@ -64,7 +64,7 @@ extern "C"
   eveqs_req_grp_lock (spid_t client_pid)
   {
     processor_t *client = registry [client_pid];
-    client->group_stack.top().lock();
+    client->group_stack.back().lock();
   }
 
   //
