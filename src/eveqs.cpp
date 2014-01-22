@@ -116,6 +116,15 @@ extern "C"
     return pq->is_synced();
   }
 
+  int
+  eveqs_is_uncontrolled (spid_t client_pid, spid_t supplier_pid)
+  {
+    processor_t *client = registry [client_pid];
+    processor_t *supplier = registry [supplier_pid];
+
+    return client->cache.has_locked (supplier);
+  }
+
   //
   // Callback from garbage collector to indicate that the
   // processor isn't used anymore.
