@@ -16,7 +16,6 @@ public:
     maps(),
     base_map()
   {
-    maps.push_back (&base_map);
   }
 
 public:
@@ -26,7 +25,8 @@ public:
     queue_map* found_map = NULL;
     for (auto qmap : maps)
       {
-	if (qmap->count (supplier))
+	// We only want the private queues that are already locked
+	if (qmap->count (supplier) && (*qmap)[supplier]->is_locked())
 	  {
 	    found_map = qmap;
 	    break;
@@ -37,10 +37,14 @@ public:
       {
 	return (*found_map)[supplier];
       }
+    else if (base_map.count (supplier))
+      {
+	return base_map [supplier];
+      }
     else
       {
 	priv_queue *pq = new priv_queue (owner, supplier);
-	(*maps[0])[supplier] = pq;
+	base_map [supplier] = pq;
 	return pq;
       }
 }

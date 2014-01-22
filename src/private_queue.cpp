@@ -37,13 +37,18 @@ priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
 void
 priv_queue::lock()
 {
-  lock_depth++;
-
-  if (lock_depth == 1)
+  if (lock_depth == 0)
     {
       supplier->qoq.push(this);
+      lock_depth++;
       synced = false;
     }
+}
+
+bool
+priv_queue::is_locked()
+{
+  return lock_depth > 0;
 }
 
 bool
