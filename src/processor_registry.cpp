@@ -105,10 +105,6 @@ processor_registry::return_processor (processor *proc)
 	  all_done = true;
 	  all_done_cv.notify_one();
 	}
-      else if (used_pids.size() == 1)
-	{
-	  (*this)[0]->shutdown();
-	}
 
       // pid 0 is special so we don't recycle that one.
       if (pid)
@@ -180,6 +176,16 @@ void
 processor_registry::wait_for_all()
 {
   processor *root_proc = (*this)[0];
+
+  // Clearing all the roots that point at
+  // the root processor. It can now only be held
+  // alive by references from other processors.
+  // reclaim();
+  root_obj = NULL;
+  except_mnger = NULL;
+  scp_mnger = NULL;
+  rt_type_set = NULL;
+
   root_proc->has_client = false;
   root_proc->application_loop();
   return_processor (root_proc);
