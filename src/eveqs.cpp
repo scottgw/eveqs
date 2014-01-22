@@ -122,7 +122,7 @@ extern "C"
     processor_t *client = registry [client_pid];
     processor_t *supplier = registry [supplier_pid];
 
-    return client->cache.has_locked (supplier);
+    return !client->cache.has_locked (supplier);
   }
 
   //
