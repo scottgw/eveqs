@@ -55,7 +55,7 @@ extern "C"
   eveqs_req_grp_add_supplier (spid_t client_pid, spid_t supplier_pid)
   {
     processor_t *client = registry [client_pid];
-    processor_t *supplier = registry [supplier_pid];  
+    processor_t *supplier = registry [supplier_pid];
     client->group_stack.back().add (supplier);
   }
 
@@ -125,12 +125,11 @@ extern "C"
       }
   }
 
-
   int
   eveqs_is_synced_on (spid_t client_pid, spid_t supplier_pid)
   {
     processor_t *client = registry [client_pid];
-    processor_t *supplier = registry [supplier_pid];  
+    processor_t *supplier = registry [supplier_pid];
 
     priv_queue_t *pq = client->cache [supplier];
     return pq->is_synced();
