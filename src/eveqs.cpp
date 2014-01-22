@@ -88,7 +88,7 @@ extern "C"
     call_data *call = (call_data*) data;
     processor_t *client = registry [client_pid];
     processor_t *supplier = registry [supplier_pid];
-    priv_queue_t *pq = client->find_queue_for (supplier);
+    priv_queue_t *pq = client->cache [supplier];
 
     if (!supplier->has_backing_thread)
       {
@@ -112,7 +112,7 @@ extern "C"
     processor_t *client = registry [client_pid];
     processor_t *supplier = registry [supplier_pid];  
 
-    priv_queue_t *pq = client->find_queue_for (supplier);
+    priv_queue_t *pq = client->cache [supplier];
     return pq->is_synced();
   }
 

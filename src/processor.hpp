@@ -33,6 +33,7 @@
 #include "spsc.hpp"
 #include "eveqs.h"
 #include "notify_token.hpp"
+#include "queue_cache.hpp"
 
 struct notifier : spsc <void*> {
 
@@ -64,7 +65,7 @@ public:
 
   // queue cache
 public:
-  priv_queue_t* find_queue_for(processor_t*);
+  queue_cache cache;
 
   // queue operations, move to private and offer clients
   // only pushing capabilities?
@@ -106,7 +107,7 @@ public:
   // private stuff, no particular grouping
 private:
   void process_priv_queue(priv_queue_t*);
-  std::unordered_map <processor_t*, priv_queue_t*> queue_cache;
+
 };
 
 

@@ -33,7 +33,7 @@ req_grp::req_grp(processor_t *_client) :
 void
 req_grp::add(processor_t *supplier)
 {
-  priv_queue_t *pq = client->find_queue_for (supplier);
+  priv_queue_t *pq = client->cache[supplier];
   push_back (pq);
 }
 

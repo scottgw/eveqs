@@ -34,6 +34,7 @@ std::atomic<int> active_count = ATOMIC_VAR_INIT (0);
 
 processor::processor(spid_t _pid,
                      bool _has_backing_thread) :
+  cache (this),
   group_stack (),
   my_token (this),
   token_queue (),
@@ -209,21 +210,6 @@ processor::application_loop()
     }
 }
 
-priv_queue_t*
-processor::find_queue_for(processor_t *supplier)
-{
-  if (queue_cache.count (supplier))
-    {
-      return queue_cache [supplier];
-    }
-  else
-    {
-      priv_queue_t *pq = new priv_queue (this, supplier);
-      queue_cache[supplier] = pq;
-      return pq;
-    }
-}
-
 void
 processor::shutdown()
 {
@@ -239,10 +225,5 @@ processor::mark(marker_t mark)
       mark_call_data (mark, executing_call);
     }
 
-  for (auto &pq_pair : queue_cache)
-    {
-      priv_queue *pq = pq_pair.second;
-      assert (pq_pair.first == pq->supplier);
-      pq->mark (mark);
-    }
+  cache.mark (mark);
 }
