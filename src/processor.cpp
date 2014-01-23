@@ -129,8 +129,23 @@ processor::process_priv_queue(priv_queue_t *pq)
           return;
         }
 
-      try_call (pq, executing_call);
-      // eif_try_call (executing_call);
+
+      processor *client = pq->client;
+
+      if (call_data_is_lock_passing (executing_call))
+	{
+	  push_subordinate (client);
+	  // 2) merge all the private queues in the client's request group stack
+	  //    into the cache of the supplier
+	  cache.push (&client->cache);
+	  try_call (pq, executing_call);
+	  cache.pop ();
+	  pop_subordinate ();
+	}
+      else
+	{
+	  try_call (pq, executing_call);
+	}
 
       if (call_data_sync_pid (executing_call) != NULL_PROCESSOR_ID)
         {
