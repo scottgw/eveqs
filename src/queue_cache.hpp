@@ -67,11 +67,12 @@ public:
   void
   push (queue_cache* other)
   {
-    pop_sizes.push (other->maps.size());
+    pop_sizes.push (other->maps.size() + 1);
     for (const auto other_map : other->maps)
       {
 	maps.push_back (other_map);
       }
+    maps.push_back (&other->base_map);
   }
 
   void
