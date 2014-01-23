@@ -40,9 +40,10 @@ priv_queue::lock()
   if (lock_depth == 0)
     {
       supplier->qoq.push(this);
-      lock_depth++;
       synced = false;
     }
+
+  lock_depth++;
 }
 
 bool
