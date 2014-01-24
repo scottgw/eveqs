@@ -101,7 +101,10 @@ extern "C"
       }
     else if (client->has_subordinate (supplier))
       {
+	GTCX;
+	RTS_IMPERSONATE (supplier_pid);
 	eif_try_call (call);
+	RTS_IMPERSONATE (client_pid);
       }
     else
       {
