@@ -134,6 +134,7 @@ processor::process_priv_queue(priv_queue_t *pq)
 
       if (call_data_is_lock_passing (executing_call))
 	{
+	  // FIXME: push all other subordinates from client
 	  push_subordinate (client);
 	  // 2) merge all the private queues in the client's request group stack
 	  //    into the cache of the supplier
@@ -141,6 +142,8 @@ processor::process_priv_queue(priv_queue_t *pq)
 	  try_call (pq, executing_call);
 	  cache.pop ();
 	  pop_subordinate ();
+	  // FIXME: make sure pop takes away all the subordinates added for
+	  // the client.
 	}
       else
 	{
