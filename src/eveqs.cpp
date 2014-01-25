@@ -116,6 +116,13 @@ extern "C"
     return pq->is_synced();
   }
 
+  int
+  eveqs_is_uncontrolled(spid_t client_pid, spid_t supplier_pid)
+  {
+    return 1;
+  }
+
+
   //
   // Callback from garbage collector to indicate that the
   // processor isn't used anymore.

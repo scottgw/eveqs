@@ -63,6 +63,9 @@ extern "C" {
   // Call logging
   //
 
+  int
+  eveqs_is_uncontrolled(spid_t client_pid, spid_t supplier_pid);
+
   // eif_log_call
   void
   eveqs_call_on (spid_t client_pid, spid_t supplier_pid, void* data);
