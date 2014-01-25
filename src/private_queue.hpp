@@ -35,7 +35,10 @@ public:
   
   void lock();
   void log_call(call_data*);
-  void pop_call (call_data *&);
+  void pop_call (call_data *& call)
+  {
+    pop (call);
+  }
   void register_wait();
   void unlock();
   bool is_locked();

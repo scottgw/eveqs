@@ -59,12 +59,6 @@ priv_queue::is_synced()
 }
 
 void
-priv_queue::pop_call (call_data *&call)
-{
-  pop (call);
-}
-
-void
 priv_queue::register_wait()
 {
   client->my_token.register_supplier(supplier);
