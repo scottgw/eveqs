@@ -1,118 +1,163 @@
 #ifndef _QUEUE_CACHE_H_
 #define _QUEUE_CACHE_H_
 #include <unordered_map>
-#include <algorithm>
 #include <stack>
+#include <set>
 #include <vector>
 #include "private_queue.hpp"
 
-typedef std::unordered_map <processor*, priv_queue*> queue_map;
+typedef std::vector<priv_queue*> queue_stack;
 
 class queue_cache {
 public:
   queue_cache(processor* o) :
     owner (o),
-    subs(),
-    subs_pops(),
-    base_map(),
-    maps(),
-    maps_pops()
+    sub_map(),
+    sub_stack(),
+
+    queue_map(),
+    lock_stack()
   {
-    subs.push_back(o);
-    maps.push_back(&base_map);
+    sub_map[o] = 1;
   }
+
+
+private:
+  processor *owner;
+  // The scheme for tracking the locks is to now use maps to stacks (or counts
+  // for subordinates) to provide a mechanism that can have efficient
+  // lookup, and still be able to push/pop these values.
+  //
+  // The goalis to first have efficient priv_queue lookup, as that is a very
+  // common operation, while the push/pop operations are somewhat more expensive.
+  std::unordered_map<processor*, uint32_t> sub_map;
+  std::stack<std::set<processor*>> sub_stack;
+
+  std::unordered_map <processor*, queue_stack> queue_map;
+  std::stack<std::set<processor*>> lock_stack;
 
 public:
   priv_queue*
   operator[] (processor *supplier)
   {
-    for (const auto &m : maps)
+    const auto found_it = queue_map.find (supplier);
+    priv_queue *pq;
+    if (found_it != queue_map.end())
       {
-	auto found_it = m->find (supplier);
-	if (found_it != m->end() && found_it->second->is_locked())
+	auto &stack = found_it->second;
+	if (stack.empty())
 	  {
-	    return found_it->second;
+	    stack.emplace_back (new priv_queue(owner, supplier));
 	  }
+	pq = stack.back();
+      }
+    else
+      {
+	auto res = queue_map.emplace (supplier, queue_stack());
+	auto &stack = res.first->second;
+	stack.emplace_back (new priv_queue(owner, supplier));
+	pq = stack.back();
       }
 
-    priv_queue *pq = new priv_queue (owner, supplier);
-    base_map [supplier] = pq;
     return pq;
   }
 
   bool
-  has_locked (processor *proc)
+  has_locked (processor *proc) const
   {
-    for (const auto &m : maps)
+    auto found_it = queue_map.find (proc);
+    if (found_it != queue_map.end())
       {
-	auto found_it = m->find (proc);
-	if (found_it != m->end() && found_it->second->is_locked())
-	  {
-	    return true;
-	  }
+	auto &stack = found_it->second;
+	return !stack.empty() && stack.back()->is_locked();
       }
 
     return false;
   }
 
   bool
-  has_subordinate (processor *proc)
+  has_subordinate (processor *proc) const
   {
-    return std::count(subs.begin(), subs.end(), proc) > 0;
+    const auto res = sub_map.find (proc);
+    return res != sub_map.end() && res->second > 0;
   }
   
 public:
   void
-  push (queue_cache* other)
+  push (const queue_cache* other)
   {
-    maps_pops.push (other->maps.size());
-    for (auto m : other->maps)
+    std::set <processor*> new_locks;
+    for (const auto pair : other->queue_map)
       {
-	maps.push_back (m);
-      }
+	const auto supplier = pair.first;
+	auto &stack = pair.second;
 
-    subs_pops.push (other->subs.size());
-    for (auto s : other->subs)
-      {
-	subs.push_back (s);
+	if (!stack.empty() && stack.back()->is_locked())
+	  {
+	    priv_queue *pq = stack.back();
+	    new_locks.insert (supplier);
+
+	    if (queue_map.find (supplier) == queue_map.end())
+	      {
+		queue_map [supplier] = queue_stack();
+	      }
+	    queue_map [supplier].emplace_back (pq);
+	  }
       }
+    lock_stack.push (new_locks);
+
+
+    std::set <processor*> new_subs;
+    for (const auto pair : other->sub_map)
+      {
+	const auto supplier = pair.first;
+	const auto count = pair.second;
+
+	if (count > 0)
+	  {
+	    new_subs.insert (supplier);
+
+	    if (sub_map.find (supplier) == sub_map.end())
+	      {
+		sub_map [supplier] = 0;
+	      }
+	    sub_map [supplier]++;
+	  }
+      }
+    sub_stack.push (new_subs);
   }
 
   void
   pop ()
   {
-    for (auto i = 0U; i < maps_pops.top(); i++)
+    const auto newest_locks = lock_stack.top();
+    for (const auto &supplier : newest_locks)
       {
-	maps.pop_back();
+	queue_map[supplier].pop_back();
       }
-    maps_pops.pop();
+    lock_stack.pop();
 
-    for (auto i = 0U; i < subs_pops.top(); i++)
+    auto newest_subs = sub_stack.top();
+    for (const auto &supplier : newest_subs)
       {
-	subs.pop_back();
+	sub_map[supplier]--;
       }
-    subs_pops.pop();
+    sub_stack.pop();
   }
 
 public:
   void
   mark (marker_t mark)
   {
-    for (auto &pq_pair : base_map)
+    for (const auto &pair : queue_map)
     {
-      priv_queue *pq = pq_pair.second;
-      pq->mark (mark);
+      auto &stack = pair.second;
+      for (auto &pq : stack)
+	{
+	  pq->mark (mark);
+	}
     }
   }
-
-private:
-  processor *owner;
-  std::vector<processor*> subs;
-  std::stack<uint32_t> subs_pops;
-
-  queue_map base_map;
-  std::vector<queue_map*> maps;
-  std::stack<uint32_t> maps_pops;
 };
 
 #endif // _QUEUE_CACHE_H_
