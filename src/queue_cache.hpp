@@ -1,88 +1,95 @@
 #ifndef _QUEUE_CACHE_H_
 #define _QUEUE_CACHE_H_
 #include <unordered_map>
-#include <vector>
+#include <algorithm>
 #include <stack>
+#include <vector>
 #include "private_queue.hpp"
 
 typedef std::unordered_map <processor*, priv_queue*> queue_map;
-typedef std::vector <queue_map*> map_stack;
 
 class queue_cache {
 public:
   queue_cache(processor* o) :
     owner (o),
-    pop_sizes(),
+    subs(),
+    subs_pops(),
+    base_map(),
     maps(),
-    base_map()
+    maps_pops()
   {
+    subs.push_back(o);
+    maps.push_back(&base_map);
   }
 
 public:
   priv_queue*
   operator[] (processor *supplier)
   {
-    queue_map* found_map = NULL;
-    for (auto qmap : maps)
+    for (auto m : maps)
       {
-	// We only want the private queues that are already locked
-	if (qmap->count (supplier) && (*qmap)[supplier]->is_locked())
+	if (m->count (supplier) && (*m)[supplier]->is_locked())
 	  {
-	    found_map = qmap;
-	    break;
+	    return (*m)[supplier];
 	  }
       }
 
-    if (found_map)
-      {
-	return (*found_map)[supplier];
-      }
-    else if (base_map.count (supplier))
-      {
-	return base_map [supplier];
-      }
-    else
-      {
-	priv_queue *pq = new priv_queue (owner, supplier);
-	base_map [supplier] = pq;
-	return pq;
-      }
+    priv_queue *pq = new priv_queue (owner, supplier);
+    base_map [supplier] = pq;
+    return pq;
   }
 
   bool
   has_locked (processor *proc)
   {
-    for (auto qmap : maps)
+    for (auto m : maps)
       {
-	if (qmap->count (proc) && (*qmap)[proc]->is_locked())
+	if (m->count (proc) && (*m)[proc]->is_locked())
 	  {
 	    return true;
 	  }
       }
 
-    return base_map.count (proc) && base_map[proc]->is_locked();
+    return false;
+  }
+
+  bool
+  has_subordinate (processor *proc)
+  {
+    return std::count(subs.begin(), subs.end(), proc) > 0;
   }
   
 public:
   void
   push (queue_cache* other)
   {
-    pop_sizes.push (other->maps.size() + 1);
-    for (const auto other_map : other->maps)
+    maps_pops.push (other->maps.size());
+    for (auto m : other->maps)
       {
-	maps.push_back (other_map);
+	maps.push_back (m);
       }
-    maps.push_back (&other->base_map);
+
+    subs_pops.push (other->subs.size());
+    for (auto s : other->subs)
+      {
+	subs.push_back (s);
+      }
   }
 
   void
   pop ()
   {
-    for (auto i = 0U; i < pop_sizes.top(); i++)
+    for (auto i = 0U; i < maps_pops.top(); i++)
       {
-	maps.pop_back ();
+	maps.pop_back();
       }
-    pop_sizes.pop();
+    maps_pops.pop();
+
+    for (auto i = 0U; i < subs_pops.top(); i++)
+      {
+	subs.pop_back();
+      }
+    subs_pops.pop();
   }
 
 public:
@@ -98,9 +105,12 @@ public:
 
 private:
   processor *owner;
-  std::stack<uint32_t> pop_sizes;
-  map_stack maps;
+  std::vector<processor*> subs;
+  std::stack<uint32_t> subs_pops;
+
   queue_map base_map;
+  std::vector<queue_map*> maps;
+  std::stack<uint32_t> maps_pops;
 };
 
 #endif // _QUEUE_CACHE_H_

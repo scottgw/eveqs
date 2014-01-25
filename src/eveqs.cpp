@@ -99,7 +99,7 @@ extern "C"
 	supplier->spawn();
 	supplier->startup_notify.wait(NULL);
       }
-    else if (client->has_subordinate (supplier))
+    else if (client->cache.has_subordinate (supplier))
       {
 	GTCX;
 	RTS_IMPERSONATE (supplier_pid);

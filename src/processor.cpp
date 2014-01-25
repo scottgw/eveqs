@@ -35,7 +35,6 @@ std::atomic<int> active_count = ATOMIC_VAR_INIT (0);
 
 processor::processor(spid_t _pid,
                      bool _has_backing_thread) :
-  subordinates (),
   cache (this),
   group_stack (),
   my_token (this),
@@ -48,25 +47,6 @@ processor::processor(spid_t _pid,
 {
   active_count++;
 }
-
-void
-processor::push_subordinate (processor *proc)
-{
-  subordinates.push_back (proc);
-}
-
-void
-processor::pop_subordinate ()
-{
-  subordinates.pop_back();
-}
-
-bool
-processor::has_subordinate (processor *proc)
-{
-  return std::count (subordinates.begin(), subordinates.end(), proc) > 0;
-}
-
 
 // This is a modified RTE_T with no `start' label
 #define RTE_T_QS              \
@@ -134,16 +114,9 @@ processor::process_priv_queue(priv_queue_t *pq)
 
       if (call_data_is_lock_passing (executing_call))
 	{
-	  // FIXME: push all other subordinates from client
-	  push_subordinate (client);
-	  // 2) merge all the private queues in the client's request group stack
-	  //    into the cache of the supplier
 	  cache.push (&client->cache);
 	  try_call (pq, executing_call);
 	  cache.pop ();
-	  pop_subordinate ();
-	  // FIXME: make sure pop takes away all the subordinates added for
-	  // the client.
 	}
       else
 	{

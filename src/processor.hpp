@@ -63,11 +63,6 @@ public:
   void application_loop();
   void shutdown();
 
-  // subordinate processors
-public:
-  void push_subordinate (processor *);
-  void pop_subordinate ();
-  bool has_subordinate (processor *);
 private:
   std::vector<processor*> subordinates;
 
