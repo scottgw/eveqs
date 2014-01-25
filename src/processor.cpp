@@ -48,25 +48,6 @@ processor::processor(spid_t _pid,
   active_count++;
 }
 
-void
-processor::push_subordinate (processor *proc)
-{
-  subordinates.push_back (proc);
-}
-
-void
-processor::pop_subordinate ()
-{
-  subordinates.pop_back();
-}
-
-bool
-processor::has_subordinate (processor *proc)
-{
-  return std::count (subordinates.begin(), subordinates.end(), proc) > 0;
-}
-
-
 // This is a modified RTE_T with no `start' label
 #define RTE_T_QS              \
   saved_except = RTLA;        \
