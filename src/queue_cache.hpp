@@ -21,6 +21,16 @@ public:
     sub_map[o] = 1;
   }
 
+  ~queue_cache()
+  {
+    for (auto pair : queue_map)
+      {
+	for (auto pq : pair.second)
+	  {
+	    delete pq;
+	  }
+      }
+  }
 
 private:
   processor *owner;
