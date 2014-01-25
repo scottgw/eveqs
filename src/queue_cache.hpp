@@ -47,10 +47,11 @@ private:
   std::stack<std::set<processor*>> lock_stack;
 
 public:
+  inline
   priv_queue*
-  operator[] (processor *supplier)
+  operator[] (processor * const supplier)
   {
-    const auto found_it = queue_map.find (supplier);
+    const auto &found_it = queue_map.find (supplier);
     priv_queue *pq;
     if (found_it != queue_map.end())
       {
@@ -63,7 +64,7 @@ public:
       }
     else
       {
-	auto res = queue_map.emplace (supplier, queue_stack());
+	const auto &res = queue_map.emplace (supplier, queue_stack());
 	auto &stack = res.first->second;
 	stack.emplace_back (new priv_queue(owner, supplier));
 	pq = stack.back();
