@@ -26,11 +26,12 @@ public:
   priv_queue*
   operator[] (processor *supplier)
   {
-    for (auto m : maps)
+    for (const auto &m : maps)
       {
-	if (m->count (supplier) && (*m)[supplier]->is_locked())
+	auto found_it = m->find (supplier);
+	if (found_it != m->end() && found_it->second->is_locked())
 	  {
-	    return (*m)[supplier];
+	    return found_it->second;
 	  }
       }
 
@@ -42,9 +43,10 @@ public:
   bool
   has_locked (processor *proc)
   {
-    for (auto m : maps)
+    for (const auto &m : maps)
       {
-	if (m->count (proc) && (*m)[proc]->is_locked())
+	auto found_it = m->find (proc);
+	if (found_it != m->end() && found_it->second->is_locked())
 	  {
 	    return true;
 	  }
