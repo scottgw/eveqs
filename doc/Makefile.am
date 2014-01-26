@@ -9,5 +9,8 @@ CXXFLAGS = -I${HOME}/local/Eiffel_14.05/studio/spec/linux-x86-64/include \
 docdir = $(datadir)/doc/@PACKAGE@
 dist_pkgdata_DATA: index.html
 
-all-local: ${FULL_SRC}
+index.html: ${FULL_SRC}
 	cldoc generate ${CXXFLAGS} -- --basedir ../ --output ./ ${FULL_SRC}
+
+all-local: index.html
+
