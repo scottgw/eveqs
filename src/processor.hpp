@@ -188,10 +188,10 @@ public:
    * @pq private queue to take the call from
    * @call the call to apply
    */
-  void try_call (priv_queue_t *pq, call_data *call);
+  void try_call (priv_queue *pq, call_data *call);
 
 private:
-  void process_priv_queue(priv_queue_t*);
+  void process_priv_queue(priv_queue*);
 
 };
 

@@ -29,7 +29,7 @@ extern "C"
   void
   eveqs_req_grp_new (spid_t client_pid)
   {
-    processor_t *client = registry [client_pid];
+    processor *client = registry [client_pid];
     client->group_stack.push_back (req_grp(client));
   }
 
@@ -37,7 +37,7 @@ extern "C"
   void
   eveqs_req_grp_delete (spid_t client_pid)
   {
-    processor_t *client = registry [client_pid];
+    processor *client = registry [client_pid];
     client->group_stack.back().unlock();
     client->group_stack.pop_back();
   }
@@ -46,7 +46,7 @@ extern "C"
   void
   eveqs_req_grp_wait (spid_t client_pid)
   {
-    processor_t *client = registry [client_pid];
+    processor *client = registry [client_pid];
     client->group_stack.back().wait();
   }
 
@@ -54,8 +54,8 @@ extern "C"
   void
   eveqs_req_grp_add_supplier (spid_t client_pid, spid_t supplier_pid)
   {
-    processor_t *client = registry [client_pid];
-    processor_t *supplier = registry [supplier_pid];
+    processor *client = registry [client_pid];
+    processor *supplier = registry [supplier_pid];
     client->group_stack.back().add (supplier);
   }
 
@@ -63,7 +63,7 @@ extern "C"
   void
   eveqs_req_grp_lock (spid_t client_pid)
   {
-    processor_t *client = registry [client_pid];
+    processor *client = registry [client_pid];
     client->group_stack.back().lock();
   }
 
@@ -86,9 +86,9 @@ extern "C"
   eveqs_call_on (spid_t client_pid, spid_t supplier_pid, void* data)
   {
     call_data *call = (call_data*) data;
-    processor_t *client = registry [client_pid];
-    processor_t *supplier = registry [supplier_pid];
-    priv_queue_t *pq = client->cache [supplier];
+    processor *client = registry [client_pid];
+    processor *supplier = registry [supplier_pid];
+    priv_queue *pq = client->cache [supplier];
 
     if (!supplier->has_backing_thread)
       {
@@ -115,18 +115,18 @@ extern "C"
   int
   eveqs_is_synced_on (spid_t client_pid, spid_t supplier_pid)
   {
-    processor_t *client = registry [client_pid];
-    processor_t *supplier = registry [supplier_pid];
+    processor *client = registry [client_pid];
+    processor *supplier = registry [supplier_pid];
 
-    priv_queue_t *pq = client->cache [supplier];
+    priv_queue *pq = client->cache [supplier];
     return pq->is_synced();
   }
 
   int
   eveqs_is_uncontrolled (spid_t client_pid, spid_t supplier_pid)
   {
-    processor_t *client = registry [client_pid];
-    processor_t *supplier = registry [supplier_pid];
+    processor *client = registry [client_pid];
+    processor *supplier = registry [supplier_pid];
 
     return client != supplier && !client->cache.has_locked (supplier);
   }

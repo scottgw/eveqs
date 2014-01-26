@@ -23,17 +23,17 @@
 #include "req_grp.hpp"
 #include "processor.hpp"
 
-req_grp::req_grp(processor_t *_client) :
-  vector<priv_queue_t*> (),
+req_grp::req_grp(processor *_client) :
+  vector<priv_queue*> (),
   client (_client),
   sorted (false)
 {
 }
 
 void
-req_grp::add(processor_t *supplier)
+req_grp::add(processor *supplier)
 {
-  priv_queue_t *pq = client->cache[supplier];
+  priv_queue *pq = client->cache[supplier];
   push_back (pq);
 }
 
@@ -53,7 +53,7 @@ req_grp::wait()
 void
 req_grp::lock()
 {
-  auto sort_func =  [](priv_queue_t *pq1, priv_queue_t *pq2) 
+  auto sort_func =  [](priv_queue *pq1, priv_queue *pq2) 
   {
     return pq1->supplier->pid <= pq2->supplier->pid; 
   };

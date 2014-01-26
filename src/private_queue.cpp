@@ -24,7 +24,7 @@
 #include "private_queue.hpp"
 #include "eif_utils.hpp"
 
-priv_queue::priv_queue (processor_t *_client, processor_t *_supplier) :
+priv_queue::priv_queue (processor *_client, processor *_supplier) :
   spsc<call_data*>(),
   client (_client),
   supplier (_supplier),

@@ -23,22 +23,19 @@
 #include <vector>
 
 class processor;
-typedef class processor processor_t;
-
 class priv_queue;
-typedef class priv_queue priv_queue_t;
 
-class req_grp : public std::vector<priv_queue_t*>
+class req_grp : public std::vector<priv_queue*>
 {
 public:
-  req_grp(processor_t*);
+  req_grp(processor*);
 
-  void add(processor_t*);
+  void add(processor*);
   void wait();
   void lock();
   void unlock();
 private:
-  processor_t *client;
+  processor *client;
   bool sorted;
 };
 

@@ -55,7 +55,7 @@ processor::processor(spid_t _pid,
   if (!setjmp(exenv)) {
 
 void
-processor::try_call (priv_queue_t *pq, call_data *call)
+processor::try_call (priv_queue *pq, call_data *call)
 {
   // This commented section slows down some benchmarks by 2x. I believe
   // this is due to either some locking in the allocation routines (again)
@@ -98,7 +98,7 @@ processor::try_call (priv_queue_t *pq, call_data *call)
 }
 
 void
-processor::process_priv_queue(priv_queue_t *pq)
+processor::process_priv_queue(priv_queue *pq)
 {
   for (;;)
     {
@@ -139,7 +139,7 @@ processor::process_priv_queue(priv_queue_t *pq)
 void
 spawn_main(char* data, spid_t pid)
 {
-  processor_t *proc = registry [pid];
+  processor *proc = registry [pid];
   (void)data;
   proc->has_backing_thread = true;
   proc->startup_notify.wake();
@@ -191,7 +191,7 @@ processor::application_loop()
   has_client = false;
   for (;;)
     {
-      priv_queue_t *pq;
+      priv_queue *pq;
 
       // Triggering the collection happens when all
       // processors are idle. This is sufficient for
