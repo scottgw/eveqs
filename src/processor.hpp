@@ -35,6 +35,12 @@
 #include "notify_token.hpp"
 #include "queue_cache.hpp"
 
+/* A specialized version of <spsc> that is for notification.
+ *
+ * The use of <spsc> allows notifications to not be lost, although
+ * of course it can only be used between a single receiver and sender
+ * at one time.
+ */
 struct notifier : spsc <void*> {
 
   void wait (void *expected)
@@ -53,61 +59,137 @@ struct notifier : spsc <void*> {
   }
 };
 
+/* The SCOOP logical unit of processing.
+ *
+ * The processor is responsible for receiving calls, executing them, and
+ * notifying clients of changes.
+ */
 class processor
 {
 public:
+  /* Construct a new processor.
+   * @_pid the processor ID that will be used to identify this processor
+   *       to the Eiffel runtime
+   * @_has_backing_thread whether the processor alreadyd has a backing thread,
+   *                      normally this is false, but for the root processor
+   *                      it will already be true.
+   *
+   * The new processor will usually not yet have a thread backing it.
+   */
   processor(spid_t _pid,
             bool _has_backing_thread = false);
 
-  // lifetime operations
+  /* The main loop of the processor.
+   *
+   * Normally this will be called when the thread spawns but here we expose it
+   * so that it may be called externally for the root thread (whose thread is
+   * the main thread of the program, and thus already exists).
+   */
   void application_loop();
+
+  /* Send a shutdown message.
+   *
+   * Sending a shutdown message will cause the thread to shutdown when it
+   * receives it. It will only receive it after it has processed the other
+   * requests in its <qoq>, so it may not take effect immediately.
+   */
   void shutdown();
 
 private:
   std::vector<processor*> subordinates;
 
-  // queue cache
 public:
+  /* The cache of private queues for this processor.
+   */
   queue_cache cache;
 
-  // queue operations, move to private and offer clients
-  // only pushing capabilities?
 public:
+  /* The queue of queues.
+   *
+   * This will be used by private queues to add new calls for this processor
+   * to apply.
+   */
   mpscq <priv_queue*> qoq;
 
-  // separate argument stacks
 public:
+  /* A stack of <req_grp>s.
+   *
+   * The vector here is used as a stack, which mirrors the processors locked
+   * in the real call stack.
+   */
   std::vector <req_grp> group_stack;
 
-  // registration for wait condition notification
 public:
+  /* Register another processors <notify_token>.
+   * @token the token to add to this processor.
+   *
+   * These list of tokens will be notified in some way when this the heap
+   * protected by this processor may have changed. This is used to implement
+   * notification for things like wait conditions.
+   */
   void register_notify_token(notify_token token);
+
+  /* This processor's personal <notify_token>.
+   *
+   * This will be used as an argument to other <processor>'s
+   * <register_notify_token>.
+   */
   notify_token my_token;
 
 private:
   std::queue <notify_token> token_queue;
   void notify_next(processor *);
 
-  // GC interaction
+
 public:
-  bool has_client;   // activity flag for the GC
+  /* Whether this processor has a client. This is used to prevent an active
+   * processor, which may not have any references to it, from being collected.
+   */
+  bool has_client;
+  /* The current call being executed. It will be traced during marking.
+   */
   call_data* executing_call;
+  /* The marking routine to trace this processor's <priv_queue>s.
+   */
   void mark (marker_t mark);
 
-  // result notification
 public:
+  /* The notifier that this processor will wait on when it asks another 
+   * processor for a result.
+   */
   notifier result_notify;
 
-  // Interoperability with the ES runtime
 public:
+  /* Ask the Eiffel runtime to make a new thread for this processor.
+   */
   void spawn();
+  
+  /* Flag indicating if this processor has a thread backing it.
+   */
   volatile bool has_backing_thread;
-  notifier startup_notify;
-  spid_t pid;
-  std::shared_ptr<std::nullptr_t> parent_obj;
-  void try_call (priv_queue_t*, call_data*);
 
-  // private stuff, no particular grouping
+  /* Notifier used to let the constructing thread know that the backing
+   * thread for this processor has been spawned.
+   * It is important for GC that the thread that requested this processor
+   * to spawn a thread doesn't proceed until it has been constructed.
+   */
+  notifier startup_notify;
+
+  /* The processor ID.
+   */
+  spid_t pid;
+
+  /* A vacuous pointer object to satisfy the Eiffel runtime's requirement
+   * for an object to be the "current" object for a thread.
+   */
+  std::shared_ptr<std::nullptr_t> parent_obj;
+
+  /* Try to execute a call from the private queue.
+   * @pq private queue to take the call from
+   * @call the call to apply
+   */
+  void try_call (priv_queue_t *pq, call_data *call);
+
 private:
   void process_priv_queue(priv_queue_t*);
 

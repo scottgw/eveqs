@@ -62,7 +62,7 @@ size_t const cache_line_size = 64;
 template<typename T>
 class spsc;
 
-// single-producer/single-consumer queue
+// A non-blocking single-producer/single-consumer queue.
 template<typename T>
 class spsc_queue_impl
 {
@@ -161,6 +161,11 @@ private:
   spsc_queue_impl & operator = (spsc_queue_impl const&);
 };
 
+/* A blocking single-producer single-consumer queue.
+ *
+ * This can only be used for reliable sending between a single producer
+ * and consumer.
+ */
 template <typename T>
 class spsc
 {
