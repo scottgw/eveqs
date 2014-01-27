@@ -25,14 +25,36 @@
 class processor;
 class priv_queue;
 
+/* A request group.
+ *
+ * Request groups model the group of locks taken and released. This
+ * generally occurs when a call has separate arguments.
+ */
 class req_grp : public std::vector<priv_queue*>
 {
 public:
-  req_grp(processor*);
+  /* Construct a new group.
+   * @client the <processor> which will issue calls to the group.
+   */
+  req_grp(processor* client);
 
-  void add(processor*);
+  /* Add a new processor to the group.
+   * @supplier the supplier to add
+   */
+  void add(processor* supplier);
+
+  /* Wait on all processors in the group.
+   *
+   * This call will only return when one of the group sends a notification.
+   */
   void wait();
+
+  /* Lock all processors in the group.
+   */
   void lock();
+
+  /* Unlock all processors in the group.
+   */
   void unlock();
 private:
   processor *client;

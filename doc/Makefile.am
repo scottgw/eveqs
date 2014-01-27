@@ -1,6 +1,7 @@
 SRC = private_queue.hpp \
 	processor.hpp \
 	queue_cache.hpp \
+	req_grp.hpp \
 	spsc.hpp
 
 FULL_SRC = $(addprefix $(top_srcdir)/src/, ${SRC})
