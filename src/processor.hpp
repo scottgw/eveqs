@@ -99,13 +99,13 @@ private:
   std::vector<processor*> subordinates;
 
 public:
-  /* The cache of private queues for this processor.
+  /* The cache of private queues.
    */
   queue_cache cache;
 
 public:
   /* The queue of queues.
-   *
+   * 
    * This will be used by private queues to add new calls for this processor
    * to apply.
    */
@@ -113,7 +113,7 @@ public:
 
 public:
   /* A stack of <req_grp>s.
-   *
+   * 
    * The vector here is used as a stack, which mirrors the processors locked
    * in the real call stack.
    */
@@ -129,8 +129,8 @@ public:
    */
   void register_notify_token(notify_token token);
 
-  /* This processor's personal <notify_token>.
-   *
+  /* Notify token for wait conditions.
+   * 
    * This will be used as an argument to other <processor>'s
    * <register_notify_token>.
    */
@@ -143,12 +143,16 @@ private:
 
 public:
 
-  /* Whether this processor has a client. This is used to prevent an active
+  /* Has a client.
+   * 
+   * This is used to prevent an active
    * processor, which may not have any references to it, from being collected.
    */
   bool has_client;
 
-  /* The current call being executed. It will be traced during marking.
+  /* The currently executing call.
+   * 
+   * This will be traced during marking.
    */
   call_data* executing_call;
 
@@ -157,8 +161,10 @@ public:
   void mark (marker_t mark);
 
 public:
-  /* The notifier that this processor will wait on when it asks another 
-   * processor for a result.
+  /* A result notifier.
+   * 
+   * This is the notifier that this processor will wait on when
+   * it asks another processor for a result.
    */
   notifier result_notify;
 
@@ -167,11 +173,15 @@ public:
    */
   void spawn();
   
-  /* Flag indicating if this processor has a thread backing it.
+  /* Has an associated thread.
+   * 
+   * True if this processor has a thread spawned to back it.
    */
   volatile bool has_backing_thread;
 
-  /* Notifier used to let the constructing thread know that the backing
+  /* Notifier for startup.
+   *
+   * Lets the constructing thread know that the backing
    * thread for this processor has been spawned.
    * It is important for GC that the thread that requested this processor
    * to spawn a thread doesn't proceed until it has been constructed.
