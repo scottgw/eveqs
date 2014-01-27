@@ -142,13 +142,16 @@ private:
 
 
 public:
+
   /* Whether this processor has a client. This is used to prevent an active
    * processor, which may not have any references to it, from being collected.
    */
   bool has_client;
+
   /* The current call being executed. It will be traced during marking.
    */
   call_data* executing_call;
+
   /* The marking routine to trace this processor's <priv_queue>s.
    */
   void mark (marker_t mark);
@@ -179,6 +182,7 @@ public:
    */
   spid_t pid;
 
+private:
   /* A vacuous pointer object to satisfy the Eiffel runtime's requirement
    * for an object to be the "current" object for a thread.
    */
@@ -190,7 +194,6 @@ public:
    */
   void try_call (priv_queue *pq, call_data *call);
 
-private:
   void process_priv_queue(priv_queue*);
 
 };
