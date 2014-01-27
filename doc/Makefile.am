@@ -1,5 +1,6 @@
 SRC = private_queue.hpp \
 	processor.hpp \
+	notify_token.hpp \
 	queue_cache.hpp \
 	req_grp.hpp \
 	spsc.hpp

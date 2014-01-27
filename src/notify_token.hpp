@@ -26,14 +26,43 @@
 
 class processor;
 
-class notify_token {
+/* A notification mechanism.
+ *
+ * This is used to implement the wait-condition mechanism.
+ * In particular it allows multiple suppliers to notify a single
+ * client that they are ready.
+ */
+class notify_token
+{
 public:
+  /* Construct a notify token.
+   * @client the owner of the token
+   */
   notify_token(processor *client);
-  notify_token(const notify_token&);
 
+  /* Copy constructor.
+   * @other the token to copy.
+   */
+  notify_token(const notify_token& other);
+
+  /* Register with a new supplier.
+   * @supplier the new supplier to register with.
+   *
+   * This token is added to the notification list of the supplier.
+   */
   void register_supplier (processor *supplier);
+
+  /* Wait for a signal from any supplier.
+   */
   void wait();
+
+  /* Wake the supplier assocated with this token
+   */
   void notify(processor *client);
+
+  /* The processor for which this token is <processor::my_token>.
+   * @return the client associated with this token.
+   */
   processor *client() const;
 
 private:
