@@ -51,6 +51,10 @@ extern "C" {
   void
   eveqs_req_grp_lock (spid_t client_pid);
 
+  // for RTS_OU
+  int
+  eveqs_is_uncontrolled (spid_t client_pid, spid_t supplier_pid);
+
   //
   // Processor creation
   //

@@ -25,6 +25,7 @@
 #include "private_queue.hpp"
 #include "processor.hpp"
 #include <atomic>
+#include <algorithm>
 #include <eif_posix_threads.h>
 #include <eif_threads.h>
 #include <stdarg.h>
@@ -34,6 +35,7 @@ std::atomic<int> active_count = ATOMIC_VAR_INIT (0);
 
 processor::processor(spid_t _pid,
                      bool _has_backing_thread) :
+  cache (this),
   group_stack (),
   my_token (this),
   token_queue (),
@@ -53,7 +55,7 @@ processor::processor(spid_t _pid,
   if (!setjmp(exenv)) {
 
 void
-processor::try_call (priv_queue_t *pq, call_data *call)
+processor::try_call (priv_queue *pq, call_data *call)
 {
   // This commented section slows down some benchmarks by 2x. I believe
   // this is due to either some locking in the allocation routines (again)
@@ -96,7 +98,7 @@ processor::try_call (priv_queue_t *pq, call_data *call)
 }
 
 void
-processor::process_priv_queue(priv_queue_t *pq)
+processor::process_priv_queue(priv_queue *pq)
 {
   for (;;)
     {
@@ -107,8 +109,19 @@ processor::process_priv_queue(priv_queue_t *pq)
           return;
         }
 
-      try_call (pq, executing_call);
-      // eif_try_call (executing_call);
+
+      processor *client = pq->client;
+
+      if (call_data_is_lock_passing (executing_call))
+	{
+	  cache.push (&client->cache);
+	  try_call (pq, executing_call);
+	  cache.pop ();
+	}
+      else
+	{
+	  try_call (pq, executing_call);
+	}
 
       if (call_data_sync_pid (executing_call) != NULL_PROCESSOR_ID)
         {
@@ -126,7 +139,7 @@ processor::process_priv_queue(priv_queue_t *pq)
 void
 spawn_main(char* data, spid_t pid)
 {
-  processor_t *proc = registry [pid];
+  processor *proc = registry [pid];
   (void)data;
   proc->has_backing_thread = true;
   proc->startup_notify.wake();
@@ -178,7 +191,7 @@ processor::application_loop()
   has_client = false;
   for (;;)
     {
-      priv_queue_t *pq;
+      priv_queue *pq;
 
       // Triggering the collection happens when all
       // processors are idle. This is sufficient for
@@ -209,21 +222,6 @@ processor::application_loop()
     }
 }
 
-priv_queue_t*
-processor::find_queue_for(processor_t *supplier)
-{
-  if (queue_cache.count (supplier))
-    {
-      return queue_cache [supplier];
-    }
-  else
-    {
-      priv_queue_t *pq = new priv_queue (this, supplier);
-      queue_cache[supplier] = pq;
-      return pq;
-    }
-}
-
 void
 processor::shutdown()
 {
@@ -239,10 +237,5 @@ processor::mark(marker_t mark)
       mark_call_data (mark, executing_call);
     }
 
-  for (auto &pq_pair : queue_cache)
-    {
-      priv_queue *pq = pq_pair.second;
-      assert (pq_pair.first == pq->supplier);
-      pq->mark (mark);
-    }
+  cache.mark (mark);
 }

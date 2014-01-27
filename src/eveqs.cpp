@@ -29,42 +29,42 @@ extern "C"
   void
   eveqs_req_grp_new (spid_t client_pid)
   {
-    processor_t *client = registry [client_pid];
-    client->group_stack.push(req_grp(client));
+    processor *client = registry [client_pid];
+    client->group_stack.push_back (req_grp(client));
   }
 
   // RTS_RD (o) - delete chain (release locks?)
   void
   eveqs_req_grp_delete (spid_t client_pid)
   {
-    processor_t *client = registry [client_pid];
-    client->group_stack.top().unlock();
-    client->group_stack.pop();
+    processor *client = registry [client_pid];
+    client->group_stack.back().unlock();
+    client->group_stack.pop_back();
   }
 
   // RTS_RF (o) - wait condition fails
   void
   eveqs_req_grp_wait (spid_t client_pid)
   {
-    processor_t *client = registry [client_pid];
-    client->group_stack.top().wait();
+    processor *client = registry [client_pid];
+    client->group_stack.back().wait();
   }
 
   // RTS_RS (c, s) - add supplier s to current group for c
   void
   eveqs_req_grp_add_supplier (spid_t client_pid, spid_t supplier_pid)
   {
-    processor_t *client = registry [client_pid];
-    processor_t *supplier = registry [supplier_pid];  
-    client->group_stack.top().add (supplier);
+    processor *client = registry [client_pid];
+    processor *supplier = registry [supplier_pid];
+    client->group_stack.back().add (supplier);
   }
 
   // RTS_RW (o) - sort all suppliers in the group and get exclusive access
   void
   eveqs_req_grp_lock (spid_t client_pid)
   {
-    processor_t *client = registry [client_pid];
-    client->group_stack.top().lock();
+    processor *client = registry [client_pid];
+    client->group_stack.back().lock();
   }
 
   //
@@ -86,9 +86,9 @@ extern "C"
   eveqs_call_on (spid_t client_pid, spid_t supplier_pid, void* data)
   {
     call_data *call = (call_data*) data;
-    processor_t *client = registry [client_pid];
-    processor_t *supplier = registry [supplier_pid];
-    priv_queue_t *pq = client->find_queue_for (supplier);
+    processor *client = registry [client_pid];
+    processor *supplier = registry [supplier_pid];
+    priv_queue *pq = client->cache [supplier];
 
     if (!supplier->has_backing_thread)
       {
@@ -99,29 +99,37 @@ extern "C"
 	supplier->spawn();
 	supplier->startup_notify.wait(NULL);
       }
+    else if (client->cache.has_subordinate (supplier))
+      {
+	GTCX;
+	RTS_IMPERSONATE (supplier_pid);
+	eif_try_call (call);
+	RTS_IMPERSONATE (client_pid);
+      }
     else
       {
 	pq->log_call (call);
       }
   }
 
-
   int
   eveqs_is_synced_on (spid_t client_pid, spid_t supplier_pid)
   {
-    processor_t *client = registry [client_pid];
-    processor_t *supplier = registry [supplier_pid];  
+    processor *client = registry [client_pid];
+    processor *supplier = registry [supplier_pid];
 
-    priv_queue_t *pq = client->find_queue_for (supplier);
+    priv_queue *pq = client->cache [supplier];
     return pq->is_synced();
   }
 
   int
-  eveqs_is_uncontrolled(spid_t client_pid, spid_t supplier_pid)
+  eveqs_is_uncontrolled (spid_t client_pid, spid_t supplier_pid)
   {
-    return 1;
-  }
+    processor *client = registry [client_pid];
+    processor *supplier = registry [supplier_pid];
 
+    return client != supplier && !client->cache.has_locked (supplier);
+  }
 
   //
   // Callback from garbage collector to indicate that the

@@ -1,4 +1,4 @@
-SUBDIRS = src .
+SUBDIRS = doc src .
 ACLOCAL_AMFLAGS = -I m4
 
 pkgconfigdir = $(libdir)/pkgconfig

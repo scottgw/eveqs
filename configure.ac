@@ -10,7 +10,7 @@ AC_PROG_CC
 AC_PROG_CXX
 
 AC_CONFIG_HEADERS([src/config.h])
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile])
 
 PKG_CHECK_MODULES([DEPS], [tbb])
 

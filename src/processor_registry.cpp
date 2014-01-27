@@ -167,7 +167,7 @@ processor_registry::unmark (spid_t pid)
   // still active.
   if (used_pids.has (pid))
     {
-      processor_t *proc = (*this) [pid];
+      processor *proc = (*this) [pid];
       proc->shutdown();
     }
 }
