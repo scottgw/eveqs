@@ -95,9 +95,6 @@ public:
    */
   void shutdown();
 
-private:
-  std::vector<processor*> subordinates;
-
 public:
   /* The cache of private queues.
    */
