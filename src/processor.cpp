@@ -109,25 +109,28 @@ processor::process_priv_queue(priv_queue *pq)
           return;
         }
 
+      spid_t sync_pid = call_data_sync_pid (executing_call);
+      processor *client;
 
-      processor *client = pq->client;
+      if (sync_pid != NULL_PROCESSOR_ID)
+	{
+	  client = registry[sync_pid];
+	}
 
       if (call_data_is_lock_passing (executing_call))
 	{
-	  cache.push (&client->cache);
+	  client->cache.push (&pq->client->cache);
 	  try_call (pq, executing_call);
-	  cache.pop ();
+	  client->cache.pop ();
 	}
       else
 	{
 	  try_call (pq, executing_call);
 	}
 
-      if (call_data_sync_pid (executing_call) != NULL_PROCESSOR_ID)
+      if (sync_pid != NULL_PROCESSOR_ID)
         {
-          // We've processed the call so notify the client
-          // that their result is ready.
-          pq->client->result_notify.wake(executing_call);
+          client->result_notify.wake(executing_call);
         }
 
       free (executing_call);

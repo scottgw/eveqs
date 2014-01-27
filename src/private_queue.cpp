@@ -21,6 +21,7 @@
 #include "eveqs.h"
 #include "internal.hpp"
 #include "processor.hpp"
+#include "processor_registry.hpp"
 #include "private_queue.hpp"
 #include "eif_utils.hpp"
 
@@ -74,7 +75,7 @@ priv_queue::log_call(call_data *call)
 
   if (will_sync)
     {
-      client->result_notify.wait(call);
+      registry[call_data_sync_pid (call)]->result_notify.wait(call);
     }
 
   synced = will_sync;
