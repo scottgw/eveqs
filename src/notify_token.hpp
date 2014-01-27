@@ -61,6 +61,7 @@ public:
   void notify(processor *client);
 
   /* The processor for which this token is <processor::my_token>.
+   *
    * @return the client associated with this token.
    */
   processor *client() const;
