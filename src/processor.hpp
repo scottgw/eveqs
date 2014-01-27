@@ -156,7 +156,8 @@ public:
    */
   call_data* executing_call;
 
-  /* The marking routine to trace this processor's <priv_queue>s.
+  /* Marks the processor's <priv_queues>
+   * @mark The specific marking routine.
    */
   void mark (marker_t mark);
 
