@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='utf-8'?>
+<index xmlns="http://jessevdk.github.com/cldoc/1.0">
+  <variable id="cache_line_size" name="cache_line_size">
+    <brief>cache line size on modern x86 processors (in bytes)</brief>
+    <type name="size_t" qualifier=" const" />
+  </variable>
+  <struct name="notifier" ref="notifier#notifier">
+    <brief> A specialized version of <ref ref="spsc#spsc">spsc</ref> that is for notification.</brief>
+  </struct>
+  <class name="priv_queue" ref="priv_queue#priv_queue">
+    <brief> The private queue class.</brief>
+  </class>
+  <class name="processor" ref="processor#processor">
+    <brief> The SCOOP logical unit of processing.</brief>
+  </class>
+  <class name="queue_cache" ref="queue_cache#queue_cache">
+    <brief> A cache of private queues.</brief>
+  </class>
+  <class name="req_grp" ref="req_grp#req_grp">
+    <brief> A request group.</brief>
+  </class>
+  <classtemplate name="spsc" ref="spsc#spsc">
+    <brief> A blocking single-producer single-consumer queue.</brief>
+  </classtemplate>
+  <classtemplate name="spsc_queue_impl" ref="spsc_queue_impl#spsc_queue_impl">
+    <brief>A non-blocking single-producer/single-consumer queue.</brief>
+  </classtemplate>
+  <functiontemplate id="load_consume" name="load_consume">
+    <brief>load with 'consume' (data-dependent) memory ordering</brief>
+    <return>
+      <type name="" />
+    </return>
+    <argument id="load_consume::addr" name="addr">
+      <type name="" qualifier=" const *" />
+    </argument>
+  </functiontemplate>
+  <functiontemplate id="store_release" name="store_release">
+    <brief>store with 'release' memory ordering</brief>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="store_release::addr" name="addr">
+      <type name="" qualifier="*" />
+    </argument>
+    <argument id="store_release::v" name="v">
+      <type name="" />
+    </argument>
+  </functiontemplate>
+</index>

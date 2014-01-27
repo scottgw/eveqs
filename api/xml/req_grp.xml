@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='utf-8'?>
+<class id="req_grp" interface="true" name="req_grp" xmlns="http://jessevdk.github.com/cldoc/1.0">
+  <brief> A request group.</brief>
+  <doc>Request groups model the group of locks taken and released. This
+generally occurs when a call has separate arguments.
+</doc>
+  <base access="public">
+    <type name="std::vector&lt;priv_queue *, std::allocator&lt;priv_queue *&gt; &gt;" />
+  </base>
+  <constructor abstract="yes" id="req_grp::req_grp" name="req_grp">
+    <brief> Construct a new group.</brief>
+    <argument id="req_grp::req_grp::client" name="client">
+      <doc>the <ref ref="processor#processor">processor</ref> which will issue calls to the group.</doc>
+      <type name="processor" qualifier="*" ref="processor#processor" />
+    </argument>
+  </constructor>
+  <method abstract="yes" id="req_grp::add" name="add">
+    <brief> Add a new processor to the group.</brief>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="req_grp::add::supplier" name="supplier">
+      <doc>the supplier to add</doc>
+      <type name="processor" qualifier="*" ref="processor#processor" />
+    </argument>
+  </method>
+  <method abstract="yes" id="req_grp::lock" name="lock">
+    <brief> Lock all processors in the group.</brief>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+  </method>
+  <method abstract="yes" id="req_grp::unlock" name="unlock">
+    <brief> Unlock all processors in the group.</brief>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+  </method>
+  <method abstract="yes" id="req_grp::wait" name="wait">
+    <brief> Wait on all processors in the group.</brief>
+    <doc>This call will only return when one of the group sends a notification.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+  </method>
+</class>

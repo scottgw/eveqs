@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='utf-8'?>
+<classtemplate id="spsc" name="spsc" xmlns="http://jessevdk.github.com/cldoc/1.0">
+  <brief> A blocking single-producer single-consumer queue.</brief>
+  <doc>This can only be used for reliable sending between a single producer
+and consumer.
+</doc>
+  <constructor id="spsc::spsc&lt;T&gt;" name="spsc&lt;T&gt;" />
+  <method id="spsc::pop" name="pop">
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="spsc::pop::v" name="v">
+      <type name="" qualifier=" &amp;" />
+    </argument>
+    <argument id="spsc::pop::spin" name="spin">
+      <type builtin="yes" name="int" />
+    </argument>
+  </method>
+  <method id="spsc::push" name="push">
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="spsc::push::v" name="v">
+      <type name="" />
+    </argument>
+  </method>
+  <method id="spsc::size" name="size">
+    <return>
+      <type builtin="yes" name="int" />
+    </return>
+  </method>
+  <method id="spsc::unsafe_map_" name="unsafe_map_">
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="spsc::unsafe_map_::f" name="f">
+      <type name="std::function&lt;_Signature&gt;" />
+    </argument>
+  </method>
+</classtemplate>

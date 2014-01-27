@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='utf-8'?>
+<classtemplate abstract="true" id="spsc_queue_impl" name="spsc_queue_impl" xmlns="http://jessevdk.github.com/cldoc/1.0">
+  <brief>A non-blocking single-producer/single-consumer queue.</brief>
+  <constructor id="spsc_queue_impl::spsc_queue_impl&lt;T&gt;" name="spsc_queue_impl&lt;T&gt;" />
+  <destructor id="spsc_queue_impl::~spsc_queue_impl&lt;T&gt;" name="~spsc_queue_impl&lt;T&gt;" />
+  <method id="spsc_queue_impl::dequeue" name="dequeue">
+    <brief>returns 'false' if queue is empty</brief>
+    <return>
+      <type builtin="yes" name="bool" />
+    </return>
+    <argument id="spsc_queue_impl::dequeue::v" name="v">
+      <type name="" qualifier=" &amp;" />
+    </argument>
+  </method>
+  <method id="spsc_queue_impl::enqueue" name="enqueue">
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="spsc_queue_impl::enqueue::v" name="v">
+      <type name="" />
+    </argument>
+  </method>
+</classtemplate>

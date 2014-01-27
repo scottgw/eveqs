@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='utf-8'?>
+<struct id="notifier" name="notifier" xmlns="http://jessevdk.github.com/cldoc/1.0">
+  <brief> A specialized version of <ref ref="spsc#spsc">spsc</ref> that is for notification.</brief>
+  <doc>The use of <ref ref="spsc#spsc">spsc</ref> allows notifications to not be lost, although
+of course it can only be used between a single receiver and sender
+at one time.
+</doc>
+  <base access="public">
+    <type name="spsc&lt;void *&gt;" />
+  </base>
+  <method id="notifier::wait" name="wait">
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="notifier::wait::expected" name="expected">
+      <type builtin="yes" name="void" qualifier="*" />
+    </argument>
+  </method>
+  <method id="notifier::wake" name="wake">
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="notifier::wake::finished" name="finished">
+      <type builtin="yes" name="void" qualifier="*" />
+    </argument>
+  </method>
+</struct>

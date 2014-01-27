@@ -1,0 +1,98 @@
+<?xml version='1.0' encoding='utf-8'?>
+<class id="queue_cache" name="queue_cache" xmlns="http://jessevdk.github.com/cldoc/1.0">
+  <brief> A cache of private queues.</brief>
+  <doc>This cache of private queues creates new private queues on demand.
+It also handles moving private queues from one processor to
+another, which occurs during lock-passing.
+</doc>
+  <constructor id="queue_cache::queue_cache" name="queue_cache">
+    <brief> Construct a new queue_cache.</brief>
+    <argument id="queue_cache::queue_cache::o" name="o">
+      <doc>the owner of this queue cache</doc>
+      <type name="processor" qualifier="*" ref="processor#processor" />
+    </argument>
+  </constructor>
+  <destructor id="queue_cache::~queue_cache" name="~queue_cache">
+    <brief> Destructor for <ref ref="queue_cache#queue_cache::queue_cache">queue_cache::queue_cache</ref> frees the private queues.</brief>
+  </destructor>
+  <method id="queue_cache::has_locked" name="has_locked">
+    <brief> Locked status.</brief>
+    <return>
+      <doc>true if there is a queue which currently holds a lock on the
+        desired processor, false otherwise.</doc>
+      <type builtin="yes" name="bool" />
+    </return>
+    <argument id="queue_cache::has_locked::proc" name="proc">
+      <doc>the supplier <ref ref="processor#processor">processor</ref> to query for lock acquisition</doc>
+      <type name="processor" qualifier="*" ref="processor#processor" />
+    </argument>
+  </method>
+  <method id="queue_cache::has_subordinate" name="has_subordinate">
+    <brief> Subordinate status.</brief>
+    <return>
+      <doc>true if the proc is a subordinate, false otherwise.</doc>
+      <type builtin="yes" name="bool" />
+    </return>
+    <argument id="queue_cache::has_subordinate::proc" name="proc">
+      <doc>the supplier <ref ref="processor#processor">processor</ref> of interest which may be a subordinate
+      of the owner of this <ref ref="queue_cache#queue_cache::queue_cache">queue_cache::queue_cache</ref>.</doc>
+      <type name="processor" qualifier="*" ref="processor#processor" />
+    </argument>
+  </method>
+  <method id="queue_cache::mark" name="mark">
+    <brief> GC marking.</brief>
+    <doc>Marks the calls that may be in the queues and thus otherwise invisible,
+to the Eiffel runtime.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="queue_cache::mark::mark" name="mark">
+      <doc>the marking function to use on each reference from the Eiffel
+runtime.</doc>
+      <type name="marker_t" />
+    </argument>
+  </method>
+  <method id="queue_cache::operator[]" name="operator[]">
+    <brief> Fetches a new private queue.</brief>
+    <doc>A new <ref ref="priv_queue#priv_queue">priv_queue</ref> will be constructed if none already exists
+for the desire supplier <ref ref="processor#processor">processor</ref>. This will also look to see
+if there are any private queues that were passed to this <ref ref="queue_cache#queue_cache::queue_cache">queue_cache::queue_cache</ref>
+during lock-passing. These passed-queues will already be locked,
+so they will be returned before returning a non-passed unlocked queue.
+
+</doc>
+    <return>
+      <doc>the queue ending at the supplier</doc>
+      <type name="priv_queue" qualifier="*" ref="priv_queue#priv_queue" />
+    </return>
+    <argument id="queue_cache::operator[]::supplier" name="supplier">
+      <doc>the receiver of the returned private queue</doc>
+      <type name="processor" qualifier=" const *" ref="processor#processor" />
+    </argument>
+  </method>
+  <method id="queue_cache::pop" name="pop">
+    <brief> Remove last passed locks.</brief>
+    <doc>The previously passed locks and subordinates will be removed. This
+pairs naturally with the <ref ref="queue_cache#queue_cache::push">queue_cache::push</ref> that originally passed the locks.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+  </method>
+  <method id="queue_cache::push" name="push">
+    <brief> Lock passing push.</brief>
+    <doc>The locks (<ref ref="priv_queue#priv_queue">priv_queue</ref>s) from the other processor will be added to
+this cache, and the owner of the other cache will be added to the
+subordinates along with any of its subordinates.
+This should be called in pairs with <ref ref="queue_cache#queue_cache::pop">queue_cache::pop</ref>.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="queue_cache::push::other" name="other">
+      <doc>the <ref ref="queue_cache#queue_cache::queue_cache">queue_cache::queue_cache</ref> to pass the locks from.</doc>
+      <type name="queue_cache" qualifier=" const *" ref="queue_cache#queue_cache" />
+    </argument>
+  </method>
+</class>

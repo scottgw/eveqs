@@ -1,0 +1,124 @@
+<?xml version='1.0' encoding='utf-8'?>
+<class abstract="true" id="priv_queue" name="priv_queue" xmlns="http://jessevdk.github.com/cldoc/1.0">
+  <brief> The private queue class.</brief>
+  <doc>This structure functions as a lock between the client and the supplier.
+The client is the original client, as this queue may be passed to
+other clients during lock-passing.
+</doc>
+  <base access="private">
+    <type name="spsc&lt;call_data *&gt;" />
+  </base>
+  <field id="priv_queue::client" name="client">
+    <brief>The original owner of this private queue.</brief>
+    <type name="processor" qualifier="*" ref="processor#processor" />
+  </field>
+  <field id="priv_queue::supplier" name="supplier">
+    <brief>The lifetime end-point of this queue.</brief>
+    <type name="processor" qualifier="*" ref="processor#processor" />
+  </field>
+  <field id="priv_queue::dirty" name="dirty">
+    <brief>Whether the <ref ref="priv_queue#priv_queue::supplier">priv_queue::supplier</ref> threw an exception.</brief>
+    <type builtin="yes" name="bool" />
+  </field>
+  <constructor abstract="yes" id="priv_queue::priv_queue" name="priv_queue">
+    <brief> Construct a private queue.</brief>
+    <doc>Note that although the client will never change over the lifetime of the
+private queue, all calls will not necessarily originate from the client.
+</doc>
+    <argument id="priv_queue::priv_queue::client" name="client">
+      <doc>is the "rightful" owner of the private queue.</doc>
+      <type name="processor" qualifier="*" ref="processor#processor" />
+    </argument>
+    <argument id="priv_queue::priv_queue::supplier" name="supplier">
+      <doc>is where all requests logged here will be sent to.</doc>
+      <type name="processor" qualifier="*" ref="processor#processor" />
+    </argument>
+  </constructor>
+  <method abstract="yes" id="priv_queue::is_locked" name="is_locked">
+    <brief> The locked status of this queue.</brief>
+    <doc>Reports if this queue is currently locked.
+</doc>
+    <return>
+      <type builtin="yes" name="bool" />
+    </return>
+  </method>
+  <method abstract="yes" id="priv_queue::is_synced" name="is_synced">
+    <brief> The synchronization status of the queue with the <ref ref="priv_queue#priv_queue::supplier">priv_queue::supplier</ref>.</brief>
+    <doc>The queue is considered synchronized if the <ref ref="priv_queue#priv_queue::supplier">priv_queue::supplier</ref> is currently processing
+this queue but is not currently applying any call, and the queue itself
+is empty.
+</doc>
+    <return>
+      <type builtin="yes" name="bool" />
+    </return>
+  </method>
+  <method abstract="yes" id="priv_queue::lock" name="lock">
+    <brief> Locks this private queue.</brief>
+    <doc>This places this queue in the <ref ref="priv_queue#priv_queue::supplier">priv_queue::supplier</ref>s queue of queues &amp;lt;qoq&amp;gt;.
+Locking can be recursive, both for the owner and any recipients of
+lock passing.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+  </method>
+  <method abstract="yes" id="priv_queue::log_call" name="log_call">
+    <brief> Logs a new call to the supplier.</brief>
+    <doc>This is essentially an enqueue operation on the underlying
+concurrent queue, waking the supplier if it was waiting on this
+queue for more calls.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="priv_queue::log_call::call" name="call">
+      <doc>the call to go to the supplier.</doc>
+      <type name="call_data" qualifier="*" />
+    </argument>
+  </method>
+  <method abstract="yes" id="priv_queue::mark" name="mark">
+    <brief> Mark the call data.</brief>
+    <doc>This is for integration with the EiffelStudio garbage collector
+so that the target and arguments of the calls in the call data
+(which is here outside the view of the runtime) will not be collected.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="priv_queue::mark::mark" name="mark">
+      <doc>the marking routine to use.</doc>
+      <type name="marker_t" />
+    </argument>
+  </method>
+  <method id="priv_queue::pop_call" name="pop_call">
+    <brief> Receive a new call.</brief>
+    <doc>This will be called by the supplier to receive new calls from the client
+(**or** some processor that the client has passed its locks to).
+This is a blocking call if no call data is available.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="priv_queue::pop_call::call" name="call">
+      <doc>will contain the calla fter the return of the function.</doc>
+      <type name="call_data" qualifier="* &amp;" />
+    </argument>
+  </method>
+  <method abstract="yes" id="priv_queue::register_wait" name="register_wait">
+    <brief> Register a wait operation with the <ref ref="priv_queue#priv_queue::supplier">priv_queue::supplier</ref>.</brief>
+    <doc>The <ref ref="priv_queue#priv_queue::supplier">priv_queue::supplier</ref> will contact the <ref ref="priv_queue#priv_queue::client">priv_queue::client</ref> when it has executed some
+other calls, and thus may have changed a wait-condition.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+  </method>
+  <method abstract="yes" id="priv_queue::unlock" name="unlock">
+    <brief> Unlock this queue.</brief>
+    <doc>Instructs the <ref ref="priv_queue#priv_queue::supplier">priv_queue::supplier</ref> to remove this queue from the &amp;lt;qoq&amp;gt;.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+  </method>
+</class>

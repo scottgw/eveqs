@@ -1,0 +1,137 @@
+<?xml version='1.0' encoding='utf-8'?>
+<class id="processor" interface="true" name="processor" xmlns="http://jessevdk.github.com/cldoc/1.0">
+  <brief> The SCOOP logical unit of processing.</brief>
+  <doc>The processor is responsible for receiving calls, executing them, and
+notifying clients of changes.
+</doc>
+  <field id="processor::cache" name="cache">
+    <brief> The cache of private queues.</brief>
+    <type name="queue_cache" ref="queue_cache#queue_cache" />
+  </field>
+  <field id="processor::qoq" name="qoq">
+    <brief> The queue of queues.</brief>
+    <doc>This will be used by private queues to add new calls for this processor
+to apply.
+</doc>
+    <type name="mpscq&lt;priv_queue *&gt;" />
+  </field>
+  <field id="processor::group_stack" name="group_stack">
+    <brief> A stack of <ref ref="req_grp#req_grp">req_grp</ref>s.</brief>
+    <doc>The vector here is used as a stack, which mirrors the processors locked
+in the real call stack.
+</doc>
+    <type name="std::vector&lt;req_grp, std::allocator&lt;req_grp&gt; &gt;" />
+  </field>
+  <field id="processor::my_token" name="my_token">
+    <brief> Notify token for wait conditions.</brief>
+    <doc>This will be used as an argument to other <ref ref="processor#processor::processor">processor::processor</ref>'s
+<ref ref="processor#processor::register_notify_token">processor::register_notify_token</ref>.
+</doc>
+    <type name="notify_token" />
+  </field>
+  <field id="processor::has_client" name="has_client">
+    <brief> Has a client.</brief>
+    <doc>This is used to prevent an active
+processor, which may not have any references to it, from being collected.
+</doc>
+    <type builtin="yes" name="bool" />
+  </field>
+  <field id="processor::executing_call" name="executing_call">
+    <brief> The currently executing call.</brief>
+    <doc>This will be traced during marking.
+</doc>
+    <type name="call_data" qualifier="*" />
+  </field>
+  <field id="processor::result_notify" name="result_notify">
+    <brief> A result notifier.</brief>
+    <doc>This is the notifier that this processor will wait on when
+it asks another processor for a result.
+</doc>
+    <type name="notifier" ref="notifier#notifier" />
+  </field>
+  <field id="processor::has_backing_thread" name="has_backing_thread">
+    <brief> Has an associated thread.</brief>
+    <doc>True if this processor has a thread spawned to back it.
+</doc>
+    <type builtin="yes" name="bool" />
+  </field>
+  <field id="processor::startup_notify" name="startup_notify">
+    <brief> Notifier for startup.</brief>
+    <doc>Lets the constructing thread know that the backing
+thread for this processor has been spawned.
+It is important for GC that the thread that requested this processor
+to spawn a thread doesn't proceed until it has been constructed.
+</doc>
+    <type name="notifier" ref="notifier#notifier" />
+  </field>
+  <field id="processor::pid" name="pid">
+    <brief> The processor ID.</brief>
+    <type name="spid_t" />
+  </field>
+  <constructor abstract="yes" id="processor::processor" name="processor">
+    <brief> Construct a new processor.</brief>
+    <doc>The new processor will usually not yet have a thread backing it.
+</doc>
+    <argument id="processor::processor::_pid" name="_pid">
+      <doc>the processor ID that will be used to identify this processor
+      to the Eiffel runtime</doc>
+      <type name="spid_t" />
+    </argument>
+    <argument id="processor::processor::_has_backing_thread" name="_has_backing_thread">
+      <doc>whether the processor alreadyd has a backing thread,
+                     normally this is false, but for the root processor
+                     it will already be true.</doc>
+      <type builtin="yes" name="bool" />
+    </argument>
+  </constructor>
+  <method abstract="yes" id="processor::application_loop" name="application_loop">
+    <brief> The main loop of the processor.</brief>
+    <doc>Normally this will be called when the thread spawns but here we expose it
+so that it may be called externally for the root thread (whose thread is
+the main thread of the program, and thus already exists).
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+  </method>
+  <method abstract="yes" id="processor::mark" name="mark">
+    <brief> Marks the processor's &amp;lt;priv\_queues&amp;gt;</brief>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="processor::mark::mark" name="mark">
+      <doc>The specific marking routine.</doc>
+      <type name="marker_t" />
+    </argument>
+  </method>
+  <method abstract="yes" id="processor::register_notify_token" name="register_notify_token">
+    <brief> Register another processors &amp;lt;notify\_token&amp;gt;.</brief>
+    <doc>These list of tokens will be notified in some way when this the heap
+protected by this processor may have changed. This is used to implement
+notification for things like wait conditions.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="processor::register_notify_token::token" name="token">
+      <doc>the token to add to this processor.</doc>
+      <type name="notify_token" />
+    </argument>
+  </method>
+  <method abstract="yes" id="processor::shutdown" name="shutdown">
+    <brief> Send a shutdown message.</brief>
+    <doc>Sending a shutdown message will cause the thread to shutdown when it
+receives it. It will only receive it after it has processed the other
+requests in its <ref ref="processor#processor::qoq">processor::qoq</ref>, so it may not take effect immediately.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+  </method>
+  <method abstract="yes" id="processor::spawn" name="spawn">
+    <brief> Ask the Eiffel runtime to make a new thread for this processor.</brief>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+  </method>
+</class>
