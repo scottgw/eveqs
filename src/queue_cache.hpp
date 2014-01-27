@@ -6,21 +6,29 @@
 #include <vector>
 #include "private_queue.hpp"
 
-typedef std::vector<priv_queue*> queue_stack;
-
+/* A cache of private queues.
+ *
+ * This cache of private queues creates new private queues on demand.
+ * It also handles moving private queues from one processor to 
+ * another, which occurs during lock-passing.
+ */
 class queue_cache {
 public:
+  /* Construct a new queue_cache.
+   * @o the owner of this queue cache
+   */
   queue_cache(processor* o) :
     owner (o),
     sub_map(),
     sub_stack(),
-
     queue_map(),
     lock_stack()
   {
     sub_map[o] = 1;
   }
 
+  /* Destructor for <queue_cache> frees the private queues.
+   */
   ~queue_cache()
   {
     for (auto pair : queue_map)
@@ -33,6 +41,8 @@ public:
   }
 
 private:
+  typedef std::vector<priv_queue*> queue_stack;
+ 
   processor *owner;
   // The scheme for tracking the locks is to now use maps to stacks (or counts
   // for subordinates) to provide a mechanism that can have efficient
@@ -47,6 +57,17 @@ private:
   std::stack<std::set<processor*>> lock_stack;
 
 public:
+  /* Fetches a new private queue.
+   * @supplier the receiver of the returned private queue
+   *
+   * A new <priv_queue> will be constructed if none already exists
+   * for the desire supplier <processor>. This will also look to see
+   * if there are any private queues that were passed to this <queue_cache>
+   * during lock-passing. These passed-queues will already be locked,
+   * so they will be returned before returning a non-passed unlocked queue.
+   *
+   * @return the queue ending at the supplier
+   */
   inline
   priv_queue*
   operator[] (processor * const supplier)
@@ -73,6 +94,13 @@ public:
     return pq;
   }
 
+
+  /* Locked status.
+   * @proc the supplier <processor> to query for lock acquisition
+   *
+   * @return true if there is a queue which currently holds a lock on the
+   *         desired processor, false otherwise.
+   */
   bool
   has_locked (processor *proc) const
   {
@@ -86,6 +114,12 @@ public:
     return false;
   }
 
+  /* Subordinate status.
+   * @proc the supplier <processor> of interest which may be a subordinate
+   *       of the owner of this <queue_cache>.
+   * 
+   * @return true if the proc is a subordinate, false otherwise.
+   */
   bool
   has_subordinate (processor *proc) const
   {
@@ -94,6 +128,14 @@ public:
   }
   
 public:
+  /* Lock passing push.
+   * @other the <queue_cache> to pass the locks from.
+   * 
+   * The locks (<priv_queue>s) from the other processor will be added to
+   * this cache, and the owner of the other cache will be added to the
+   * subordinates along with any of its subordinates.
+   * This should be called in pairs with <pop>.
+   */ 
   void
   push (const queue_cache* other)
   {
@@ -117,7 +159,6 @@ public:
       }
     lock_stack.push (new_locks);
 
-
     std::set <processor*> new_subs;
     for (const auto pair : other->sub_map)
       {
@@ -138,6 +179,12 @@ public:
     sub_stack.push (new_subs);
   }
 
+
+  /* Remove last passed locks.
+   *
+   * The previously passed locks and subordinates will be removed. This
+   * pairs naturally with the <push> that originally passed the locks.
+   */
   void
   pop ()
   {
@@ -157,6 +204,13 @@ public:
   }
 
 public:
+  /* GC marking.
+   * @mark the marking function to use on each reference from the Eiffel
+   * runtime.
+   *
+   * Marks the calls that may be in the queues and thus otherwise invisible,
+   * to the Eiffel runtime.
+   */
   void
   mark (marker_t mark)
   {
