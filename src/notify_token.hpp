@@ -31,7 +31,6 @@ public:
   notify_token(processor *client);
   notify_token(const notify_token&);
 
-  void next();
   void register_supplier (processor *supplier);
   void wait();
   void notify(processor *client);
