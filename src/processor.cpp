@@ -144,7 +144,7 @@ spawn_main(char* data, spid_t pid)
 {
   processor *proc = registry [pid];
   (void)data;
-  proc->has_backing_thread = true;
+
   proc->startup_notify.wake();
   proc->application_loop();
   registry.return_processor (proc);

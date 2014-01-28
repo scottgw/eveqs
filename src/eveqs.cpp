@@ -92,12 +92,10 @@ extern "C"
 
     if (!supplier->has_backing_thread)
       {
+	supplier->has_backing_thread = true;
 	pq->lock();
 	pq->log_call (call);
 	pq->unlock();
-
-	supplier->spawn();
-	supplier->startup_notify.wait(NULL);
       }
     else if (client->cache.has_subordinate (supplier))
       {
