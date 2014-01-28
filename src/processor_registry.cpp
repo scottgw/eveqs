@@ -51,7 +51,7 @@ processor_registry::processor_registry () :
 
   used_pids.add(0);
 
-  processor *root_proc = new processor(0);
+  processor *root_proc = new processor(0, true);
   root_proc->has_client = true;
 
   procs[0] = root_proc;
