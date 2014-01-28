@@ -79,7 +79,7 @@ processor_registry::create_fresh (void* obj)
   used_pids.add (pid);
 
   proc->spawn();
-  proc->startup_notify.wait(NULL);
+  proc->startup_notify.wait();
 
   return proc;
 }

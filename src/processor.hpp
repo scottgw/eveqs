@@ -41,21 +41,31 @@
  * of course it can only be used between a single receiver and sender
  * at one time.
  */
-struct notifier : spsc <void*> {
+struct notifier : spsc <call_data*> {
 
-  void wait (void *expected)
+  call_data* wait ()
   {
-    void *result;
+    call_data *result;
     this->pop(result, 64);
-    if (result != expected)
-      {
-	printf ("Unexpected result!\n");
-      }
+    return result;
   }
 
-  void wake (void *finished = NULL)
+  void wake (call_data *call = NULL)
   {
-    this->push(finished);
+    this->push(call);
+  }
+
+  void mark (marker_t mark)
+  {
+    auto mark_call =
+      [&](call_data* call)
+      {
+        if (call)
+          {
+            mark_call_data (mark, call);
+          }
+      };
+    unsafe_map_ (mark_call);
   }
 };
 
@@ -99,6 +109,12 @@ public:
   /* The cache of private queues.
    */
   queue_cache cache;
+
+  /* Process a call on this processor.
+   * @call the call to execute.
+   */
+  void
+  operator()(call_data* call);
 
 public:
   /* The queue of queues.

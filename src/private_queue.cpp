@@ -75,7 +75,16 @@ priv_queue::log_call(call_data *call)
 
   if (will_sync)
     {
-      registry[call_data_sync_pid (call)]->result_notify.wait(call);
+      processor *client = registry[call_data_sync_pid (call)];
+
+      // If this client has received a non-NULL response as a wake-up, then
+      // it is someone with our call-stack lock giving us more work.
+      while ((call_stack_call = client->result_notify.wait()))
+	{
+	  printf ("callback\n");
+	  (*client)(call_stack_call);
+	  call_stack_call = NULL;
+	}
     }
 
   synced = will_sync;
@@ -105,4 +114,9 @@ priv_queue::mark(marker_t mark)
           }
       };
   unsafe_map_ (mark_call);
+
+  if (call_stack_call)
+    {
+      mark_call_data (mark, call_stack_call);
+    }
 }

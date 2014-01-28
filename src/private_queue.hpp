@@ -119,6 +119,7 @@ public:
   void mark (marker_t mark);
 
 private:
+  call_data* call_stack_call;
   bool synced;
   int lock_depth;
 };

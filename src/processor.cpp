@@ -98,6 +98,36 @@ processor::try_call (priv_queue *pq, call_data *call)
 }
 
 void
+processor::operator()(call_data* call)
+{
+  spid_t sync_pid = call_data_sync_pid (call);
+  processor *client;
+
+  if (sync_pid != NULL_PROCESSOR_ID)
+    {
+      client = registry[sync_pid];
+    }
+
+  if (call_data_is_lock_passing (call))
+    {
+      cache.push (&client->cache);
+      try_call (NULL, call);
+      cache.pop ();
+    }
+  else
+    {
+      try_call (NULL, call);
+    }
+
+  if (sync_pid != NULL_PROCESSOR_ID)
+    {
+      client->result_notify.wake();
+    }
+
+  free (call);
+}
+
+void
 processor::process_priv_queue(priv_queue *pq)
 {
   for (;;)
@@ -109,31 +139,8 @@ processor::process_priv_queue(priv_queue *pq)
           return;
         }
 
-      spid_t sync_pid = call_data_sync_pid (executing_call);
-      processor *client;
+      (*this)(executing_call);
 
-      if (sync_pid != NULL_PROCESSOR_ID)
-	{
-	  client = registry[sync_pid];
-	}
-
-      if (call_data_is_lock_passing (executing_call))
-	{
-	  cache.push (&pq->client->cache);
-	  try_call (pq, executing_call);
-	  cache.pop ();
-	}
-      else
-	{
-	  try_call (pq, executing_call);
-	}
-
-      if (sync_pid != NULL_PROCESSOR_ID)
-        {
-          client->result_notify.wake(executing_call);
-        }
-
-      free (executing_call);
       executing_call = NULL;
     }
 }

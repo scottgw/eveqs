@@ -99,10 +99,7 @@ extern "C"
       }
     else if (client->cache.has_subordinate (supplier))
       {
-	GTCX;
-	RTS_IMPERSONATE (supplier_pid);
-	eif_try_call (call);
-	RTS_IMPERSONATE (client_pid);
+	supplier->result_notify.wake (call);
       }
     else
       {
