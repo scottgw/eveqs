@@ -119,9 +119,9 @@ processor::process_priv_queue(priv_queue *pq)
 
       if (call_data_is_lock_passing (executing_call))
 	{
-	  client->cache.push (&pq->client->cache);
+	  cache.push (&pq->client->cache);
 	  try_call (pq, executing_call);
-	  client->cache.pop ();
+	  cache.pop ();
 	}
       else
 	{
