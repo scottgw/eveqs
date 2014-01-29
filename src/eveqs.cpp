@@ -19,6 +19,7 @@
 //
 
 #include "eif_utils.hpp"
+#include "internal.hpp"
 #include "eveqs.h"
 #include "processor_registry.hpp"
 #include "processor.hpp"
@@ -100,6 +101,10 @@ extern "C"
     else if (client->cache.has_subordinate (supplier))
       {
 	supplier->result_notify.wake (call);
+	if (call_data_sync_pid (call) != NULL_PROCESSOR_ID)
+	  {
+	    client->result_notify.wait();
+	  }
       }
     else
       {
