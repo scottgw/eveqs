@@ -101,27 +101,27 @@ void
 processor::operator()(call_data* call)
 {
   spid_t sync_pid = call_data_sync_pid (call);
-  processor *client;
 
   if (sync_pid != NULL_PROCESSOR_ID)
     {
-      client = registry[sync_pid];
-    }
+      processor *client = registry[sync_pid];
 
-  if (call_data_is_lock_passing (call))
-    {
-      cache.push (&client->cache);
-      try_call (NULL, call);
-      cache.pop ();
+      if (call_data_is_lock_passing (call))
+	{
+	  cache.push (&client->cache);
+	  try_call (NULL, call);
+	  cache.pop ();
+	}
+      else
+	{
+	  try_call (NULL, call);
+	}
+
+      client->result_notify.wake();
     }
   else
     {
       try_call (NULL, call);
-    }
-
-  if (sync_pid != NULL_PROCESSOR_ID)
-    {
-      client->result_notify.wake();
     }
 
   free (call);
