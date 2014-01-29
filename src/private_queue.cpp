@@ -30,6 +30,7 @@ priv_queue::priv_queue (processor *_client, processor *_supplier) :
   client (_client),
   supplier (_supplier),
   dirty (false),
+  call_stack_call(NULL),
   synced (false),
   lock_depth(0)
 {
