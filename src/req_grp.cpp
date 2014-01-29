@@ -42,7 +42,7 @@ req_grp::wait()
 {
   for (auto &pq : *this)
     {
-      pq->register_wait();
+      pq->register_wait(client);
     }
 
   unlock();
@@ -67,7 +67,7 @@ req_grp::lock()
 
   for (auto &pq : *this)
     {
-      pq->lock();
+      pq->lock(client);
     }
 }
 

@@ -94,7 +94,7 @@ extern "C"
     if (!supplier->has_backing_thread)
       {
 	supplier->has_backing_thread = true;
-	pq->lock();
+	pq->lock(client);
 	pq->log_call (call);
 	pq->unlock();
       }

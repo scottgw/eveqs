@@ -201,7 +201,7 @@ processor::application_loop()
   has_client = false;
   for (;;)
     {
-      priv_queue *pq;
+      qoq_item res;
 
       // Triggering the collection happens when all
       // processors are idle. This is sufficient for
@@ -213,15 +213,15 @@ processor::application_loop()
           plsc();
         }
 
-      qoq.pop(pq);
+      qoq.pop(res);
 
-      if (pq)
+      if (!res.is_done)
         {
           active_count++;
           has_client = true;
 
-          process_priv_queue (pq);
-          notify_next (pq->client);
+          process_priv_queue (res.queue);
+          notify_next (res.client);
 
           has_client = false;
         }
@@ -235,7 +235,7 @@ processor::application_loop()
 void
 processor::shutdown()
 {
-  qoq.push (NULL);
+  qoq.push (qoq_item());
 }
 
 

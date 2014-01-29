@@ -79,7 +79,7 @@ public:
 	auto &stack = found_it->second;
 	if (stack.empty())
 	  {
-	    stack.emplace_back (new priv_queue(owner, supplier));
+	    stack.emplace_back (new priv_queue(supplier));
 	  }
 	pq = stack.back();
       }
@@ -87,7 +87,7 @@ public:
       {
 	const auto &res = queue_map.emplace (supplier, queue_stack());
 	auto &stack = res.first->second;
-	stack.emplace_back (new priv_queue(owner, supplier));
+	stack.emplace_back (new priv_queue(supplier));
 	pq = stack.back();
       }
 

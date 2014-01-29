@@ -122,7 +122,7 @@ public:
    * This will be used by private queues to add new calls for this processor
    * to apply.
    */
-  mpscq <priv_queue*> qoq;
+  mpscq <qoq_item> qoq;
 
 public:
   /* A stack of <req_grp>s.

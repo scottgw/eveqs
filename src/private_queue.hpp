@@ -35,26 +35,24 @@ class priv_queue : spsc <call_data*>
 {
 public:
   /* Construct a private queue.
-   * @client is the "rightful" owner of the private queue.
    * @supplier is where all requests logged here will be sent to.
    *
-   * Note that although the client will never change over the lifetime of the
-   * private queue, all calls will not necessarily originate from the client.
+   * Note that this is only private for the supplier, many clients may access
+   * the supplier through this queue.
    */
-  priv_queue (processor *client, processor *supplier);
+  priv_queue (processor *supplier);
 
-  // The original owner of this private queue.
-  processor *client;
   // The lifetime end-point of this queue.
   processor *supplier;
   
   /* Locks this private queue.
+   * @client the client of this locking operation
    *
    * This places this queue in the <supplier>s queue of queues <qoq>.
    * Locking can be recursive, both for the owner and any recipients of
    * lock passing.
    */
-  void lock();
+  void lock(processor *client);
 
   /* Logs a new call to the supplier.
    * @call the call to go to the supplier.
@@ -78,11 +76,12 @@ public:
   }
 
   /* Register a wait operation with the <supplier>.
+   * @client the client to call back
    *
-   * The <supplier> will contact the <client> when it has executed some
+   * The <supplier> will contact the client when it has executed some
    * other calls, and thus may have changed a wait-condition.
    */
-  void register_wait();
+  void register_wait(processor* client);
 
   /* Unlock this queue.
    *

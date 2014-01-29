@@ -137,4 +137,25 @@ private: // Synchronization structures
   std::condition_variable cv;
 };
 
+class processor;
+class priv_queue;
+
+struct qoq_item
+{
+  qoq_item (processor *proc, priv_queue *q) :
+    is_done (false),
+    client (proc),
+    queue (q)
+  {
+  }
+
+  qoq_item () : is_done(true)
+  {
+  }
+
+  bool is_done;
+  processor *client;
+  priv_queue *queue;
+};
+
 #endif // _QOQ_H
