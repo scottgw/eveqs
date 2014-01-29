@@ -32,8 +32,6 @@
 #include <mutex>
 #include <stdlib.h>
 
-#define MAX_PROCS 1024
-
 processor_registry registry;
 
 processor_registry::processor_registry () :
