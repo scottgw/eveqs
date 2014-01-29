@@ -82,7 +82,6 @@ priv_queue::log_call(call_data *call)
       // it is someone with our call-stack lock giving us more work.
       while ((call_stack_call = client->result_notify.wait()))
 	{
-	  printf ("callback\n");
 	  (*client)(call_stack_call);
 	  call_stack_call = NULL;
 	}
