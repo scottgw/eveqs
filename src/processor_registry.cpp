@@ -184,6 +184,7 @@ processor_registry::wait_for_all()
   // the root processor. It can now only be held
   // alive by references from other processors.
   // reclaim();
+
   root_obj = NULL;
   except_mnger = NULL;
   scp_mnger = NULL;

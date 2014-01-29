@@ -18,6 +18,7 @@
 // along with EVE/Qs.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <memory>
 #include "eif_utils.hpp"
 #include "internal.hpp"
 #include "eveqs.h"
@@ -89,12 +90,12 @@ extern "C"
     call_data *call = (call_data*) data;
     processor *client = registry [client_pid];
     processor *supplier = registry [supplier_pid];
-    priv_queue *pq = client->cache [supplier];
+    std::shared_ptr<priv_queue> pq = client->cache [supplier];
 
     if (!supplier->has_backing_thread)
       {
 	supplier->has_backing_thread = true;
-	pq->lock(client);
+        queue_lock(pq, client);
 	pq->log_call (call);
 	pq->unlock();
       }
@@ -118,7 +119,7 @@ extern "C"
     processor *client = registry [client_pid];
     processor *supplier = registry [supplier_pid];
 
-    priv_queue *pq = client->cache [supplier];
+    std::shared_ptr<priv_queue> pq = client->cache [supplier];
     return pq->is_synced();
   }
 

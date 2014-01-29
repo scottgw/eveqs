@@ -27,21 +27,8 @@ public:
     sub_map[o] = 1;
   }
 
-  /* Destructor for <queue_cache> frees the private queues.
-   */
-  ~queue_cache()
-  {
-    for (auto pair : queue_map)
-      {
-	for (auto pq : pair.second)
-	  {
-	    delete pq;
-	  }
-      }
-  }
-
 private:
-  typedef std::vector<priv_queue*> queue_stack;
+  typedef std::vector<std::shared_ptr<priv_queue>> queue_stack;
  
   processor *owner;
   // The scheme for tracking the locks is to now use maps to stacks (or counts
@@ -69,17 +56,17 @@ public:
    * @return the queue ending at the supplier
    */
   inline
-  priv_queue*
+  std::shared_ptr<priv_queue>
   operator[] (processor * const supplier)
   {
     const auto &found_it = queue_map.find (supplier);
-    priv_queue *pq;
+    std::shared_ptr<priv_queue> pq;
     if (found_it != queue_map.end())
       {
 	auto &stack = found_it->second;
 	if (stack.empty())
 	  {
-	    stack.emplace_back (new priv_queue(supplier));
+	    stack.emplace_back (std::make_shared<priv_queue>(supplier));
 	  }
 	pq = stack.back();
       }
@@ -87,7 +74,7 @@ public:
       {
 	const auto &res = queue_map.emplace (supplier, queue_stack());
 	auto &stack = res.first->second;
-	stack.emplace_back (new priv_queue(supplier));
+	stack.emplace_back (std::make_shared<priv_queue>(supplier));
 	pq = stack.back();
       }
 
@@ -147,7 +134,7 @@ public:
 
 	if (!stack.empty() && stack.back()->is_locked())
 	  {
-	    priv_queue *pq = stack.back();
+	    std::shared_ptr<priv_queue> pq = stack.back();
 	    new_locks.insert (supplier);
 
 	    if (queue_map.find (supplier) == queue_map.end())

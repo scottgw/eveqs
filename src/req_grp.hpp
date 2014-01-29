@@ -21,6 +21,7 @@
 #ifndef _REQ_GRP_H
 #define _REQ_GRP_H
 #include <vector>
+#include <memory>
 
 class processor;
 class priv_queue;
@@ -30,7 +31,7 @@ class priv_queue;
  * Request groups model the group of locks taken and released. This
  * generally occurs when a call has separate arguments.
  */
-class req_grp : public std::vector<priv_queue*>
+class req_grp : public std::vector<std::shared_ptr<priv_queue>>
 {
 public:
   /* Construct a new group.
