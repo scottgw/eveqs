@@ -27,7 +27,7 @@ in the real call stack.
     <doc>This will be used as an argument to other <ref ref="processor#processor::processor">processor::processor</ref>'s
 <ref ref="processor#processor::register_notify_token">processor::register_notify_token</ref>.
 </doc>
-    <type name="notify_token" />
+    <type name="notify_token" ref="notify_token#notify_token" />
   </field>
   <field id="processor::has_client" name="has_client">
     <brief> Has a client.</brief>
@@ -104,8 +104,18 @@ the main thread of the program, and thus already exists).
       <type name="marker_t" />
     </argument>
   </method>
+  <method abstract="yes" id="processor::operator()" name="operator()">
+    <brief> Process a call on this processor.</brief>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="processor::operator()::call" name="call">
+      <doc>the call to execute.</doc>
+      <type name="call_data" qualifier="*" />
+    </argument>
+  </method>
   <method abstract="yes" id="processor::register_notify_token" name="register_notify_token">
-    <brief> Register another processors &amp;lt;notify\_token&amp;gt;.</brief>
+    <brief> Register another processors <ref ref="notify_token#notify_token">notify_token</ref>.</brief>
     <doc>These list of tokens will be notified in some way when this the heap
 protected by this processor may have changed. This is used to implement
 notification for things like wait conditions.
@@ -115,7 +125,7 @@ notification for things like wait conditions.
     </return>
     <argument id="processor::register_notify_token::token" name="token">
       <doc>the token to add to this processor.</doc>
-      <type name="notify_token" />
+      <type name="notify_token" ref="notify_token#notify_token" />
     </argument>
   </method>
   <method abstract="yes" id="processor::shutdown" name="shutdown">

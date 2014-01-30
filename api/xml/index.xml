@@ -7,6 +7,9 @@
   <struct name="notifier" ref="notifier#notifier">
     <brief> A specialized version of <ref ref="spsc#spsc">spsc</ref> that is for notification.</brief>
   </struct>
+  <class name="notify_token" ref="notify_token#notify_token">
+    <brief> A notification mechanism.</brief>
+  </class>
   <class name="priv_queue" ref="priv_queue#priv_queue">
     <brief> The private queue class.</brief>
   </class>

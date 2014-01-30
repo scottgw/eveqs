@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='utf-8'?>
+<class id="notify_token" interface="true" name="notify_token" xmlns="http://jessevdk.github.com/cldoc/1.0">
+  <brief> A notification mechanism.</brief>
+  <doc>This is used to implement the wait-condition mechanism.
+In particular it allows multiple suppliers to notify a single
+client that they are ready.
+</doc>
+  <constructor abstract="yes" id="notify_token::notify_token" name="notify_token">
+    <brief> Construct a notify token.</brief>
+    <argument id="notify_token::notify_token::client" name="client">
+      <doc>the owner of the token</doc>
+      <type name="processor" qualifier="*" ref="processor#processor" />
+    </argument>
+  </constructor>
+  <constructor abstract="yes" id="notify_token::notify_token" name="notify_token">
+    <brief> Copy constructor.</brief>
+    <argument id="notify_token::notify_token::other" name="other">
+      <doc>the token to copy.</doc>
+      <type name="notify_token" qualifier=" const &amp;" ref="notify_token#notify_token" />
+    </argument>
+  </constructor>
+  <method abstract="yes" id="notify_token::client" name="client">
+    <brief> The processor for which this token is <ref ref="processor#processor::my_token">processor::my_token</ref>.</brief>
+    <return>
+      <doc>the client associated with this token.</doc>
+      <type name="processor" qualifier="*" ref="processor#processor" />
+    </return>
+  </method>
+  <method abstract="yes" id="notify_token::notify" name="notify">
+    <brief> Wake the supplier assocated with this token</brief>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="notify_token::notify::client" name="client">
+      <type name="processor" qualifier="*" ref="processor#processor" />
+    </argument>
+  </method>
+  <method abstract="yes" id="notify_token::register_supplier" name="register_supplier">
+    <brief> Register with a new supplier.</brief>
+    <doc>This token is added to the notification list of the supplier.
+</doc>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+    <argument id="notify_token::register_supplier::supplier" name="supplier">
+      <doc>the new supplier to register with.</doc>
+      <type name="processor" qualifier="*" ref="processor#processor" />
+    </argument>
+  </method>
+  <method abstract="yes" id="notify_token::wait" name="wait">
+    <brief> Wait for a signal from any supplier.</brief>
+    <return>
+      <type builtin="yes" name="void" />
+    </return>
+  </method>
+</class>

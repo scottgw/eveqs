@@ -6,22 +6,27 @@ of course it can only be used between a single receiver and sender
 at one time.
 </doc>
   <base access="public">
-    <type name="spsc&lt;void *&gt;" />
+    <type name="spsc&lt;call_data *&gt;" />
   </base>
-  <method id="notifier::wait" name="wait">
+  <method id="notifier::mark" name="mark">
     <return>
       <type builtin="yes" name="void" />
     </return>
-    <argument id="notifier::wait::expected" name="expected">
-      <type builtin="yes" name="void" qualifier="*" />
+    <argument id="notifier::mark::mark" name="mark">
+      <type name="marker_t" />
     </argument>
+  </method>
+  <method id="notifier::wait" name="wait">
+    <return>
+      <type name="call_data" qualifier="*" />
+    </return>
   </method>
   <method id="notifier::wake" name="wake">
     <return>
       <type builtin="yes" name="void" />
     </return>
-    <argument id="notifier::wake::finished" name="finished">
-      <type builtin="yes" name="void" qualifier="*" />
+    <argument id="notifier::wake::call" name="call">
+      <type name="call_data" qualifier="*" />
     </argument>
   </method>
 </struct>
