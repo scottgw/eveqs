@@ -169,9 +169,24 @@ processor_registry::unmark (spid_t pid)
   if (used_pids.has (pid))
     {
       processor *proc = (*this) [pid];
+      clear_from_caches (proc);
       proc->shutdown();
     }
 }
+
+
+void
+processor_registry::clear_from_caches (processor *proc)
+{
+  for (spid_t i = 0; i < MAX_PROCS ; i++)
+    {
+      if (used_pids.has (i))
+	{
+	  proc->cache.clear (proc);
+	}
+    }
+}
+
 
 void
 processor_registry::wait_for_all()

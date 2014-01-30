@@ -223,6 +223,13 @@ public:
 	}
     }
   }
+
+public:
+  void clear (processor *proc)
+  {
+    queue_map.erase (proc);
+  }
+
 };
 
 #endif // _QUEUE_CACHE_H_

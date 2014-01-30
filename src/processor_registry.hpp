@@ -110,6 +110,7 @@ private:
   // GC
 private:
   std::atomic<bool> is_marking;
+  void clear_from_caches (processor *proc);
 
   // end of life notification
 private:
