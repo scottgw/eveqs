@@ -43,10 +43,21 @@ processor::processor(spid_t _pid,
   executing_call (NULL),
   has_backing_thread (_has_backing_thread),
   pid(_pid),
+  private_queue_cache(),
+  cache_mutex(),
   parent_obj (std::make_shared<std::nullptr_t>(nullptr))
 {
   active_count++;
 }
+
+processor::~processor()
+{
+  for (auto &pq : private_queue_cache)
+    {
+      delete pq;
+    }
+}
+
 
 // This is a modified RTE_T with no `start' label
 #define RTE_T_QS              \
@@ -247,5 +258,17 @@ processor::mark(marker_t mark)
       mark_call_data (mark, executing_call);
     }
 
-  cache.mark (mark);
+  for (auto &pq : private_queue_cache)
+    {
+      pq->mark(mark);
+    }
+}
+
+
+priv_queue*
+processor::new_priv_queue()
+{
+  std::unique_lock <std::mutex> lk (cache_mutex);
+  private_queue_cache.push_back(new priv_queue(this));
+  return private_queue_cache.back();
 }

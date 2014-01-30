@@ -27,18 +27,6 @@ public:
     sub_map[o] = 1;
   }
 
-  /* Destructor for <queue_cache> frees the private queues.
-   */
-  ~queue_cache()
-  {
-    for (auto pair : queue_map)
-      {
-	for (auto pq : pair.second)
-	  {
-	    delete pq;
-	  }
-      }
-  }
 
 private:
   typedef std::vector<priv_queue*> queue_stack;

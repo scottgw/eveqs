@@ -89,6 +89,8 @@ public:
   processor(spid_t _pid,
             bool _has_backing_thread = false);
 
+  ~processor();
+
   /* The main loop of the processor.
    *
    * Normally this will be called when the thread spawns but here we expose it
@@ -205,6 +207,18 @@ public:
   /* The processor ID.
    */
   spid_t pid;
+
+public:
+  /* New private queue.
+   *
+   * @return a new private queue whose supplier is this processor.
+   */
+  priv_queue*
+  new_priv_queue();
+
+private:
+  std::vector<priv_queue*> private_queue_cache;
+  std::mutex cache_mutex;
 
 private:
   /* A vacuous pointer object to satisfy the Eiffel runtime's requirement
