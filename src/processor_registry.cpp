@@ -200,8 +200,6 @@ processor_registry::wait_for_all()
   while(!all_done)
     {
       eif_lock lock (all_done_mutex);
-      all_done_cv.wait_for(lock,
-			   std::chrono::milliseconds(200),
-			   [&](){return all_done;});
+      all_done_cv.wait(lock, [&](){return all_done;});
     }
 }
