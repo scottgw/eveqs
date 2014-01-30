@@ -36,7 +36,6 @@
 // a TBB allocator and offer a blocking behaviour when the queue is empty.
 
 #include <atomic>
-#include <memory>
 #include <mutex>
 #include <condition_variable>
 #include "eif_utils.hpp"
@@ -143,7 +142,7 @@ class priv_queue;
 
 struct qoq_item
 {
-  qoq_item (processor *proc, std::shared_ptr<priv_queue> q) :
+  qoq_item (processor *proc, priv_queue *q) :
     is_done (false),
     client (proc),
     queue (q)
@@ -156,7 +155,7 @@ struct qoq_item
 
   bool is_done;
   processor *client;
-  std::shared_ptr<priv_queue> queue;
+  priv_queue *queue;
 };
 
 #endif // _QOQ_H

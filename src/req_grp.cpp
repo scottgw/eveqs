@@ -22,10 +22,9 @@
 #include "eveqs.h"
 #include "req_grp.hpp"
 #include "processor.hpp"
-#include "private_queue.hpp"
 
 req_grp::req_grp(processor *_client) :
-  vector<std::shared_ptr<priv_queue>> (),
+  vector<priv_queue*> (),
   client (_client),
   sorted (false)
 {
@@ -34,7 +33,7 @@ req_grp::req_grp(processor *_client) :
 void
 req_grp::add(processor *supplier)
 {
-  std::shared_ptr<priv_queue> pq = client->cache[supplier];
+  priv_queue *pq = client->cache[supplier];
   push_back (pq);
 }
 
@@ -54,7 +53,7 @@ req_grp::wait()
 void
 req_grp::lock()
 {
-  auto sort_func = [](std::shared_ptr<priv_queue> pq1, std::shared_ptr<priv_queue> pq2) 
+  auto sort_func =  [](priv_queue *pq1, priv_queue *pq2) 
   {
     return pq1->supplier->pid <= pq2->supplier->pid; 
   };
@@ -68,7 +67,7 @@ req_grp::lock()
 
   for (auto &pq : *this)
     {
-      queue_lock(pq, client);
+      pq->lock(client);
     }
 }
 

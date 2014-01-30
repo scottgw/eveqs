@@ -25,18 +25,6 @@
 #include "private_queue.hpp"
 #include "eif_utils.hpp"
 
-void
-queue_lock(std::shared_ptr<priv_queue> pq, processor *client)
-{
-  if (pq->lock_depth == 0)
-    {
-      pq->supplier->qoq.push(qoq_item (client, pq));
-      pq->synced = false;
-    }
-
-  pq->lock_depth++;
-}
-
 priv_queue::priv_queue (processor *_supplier) :
   spsc<call_data*>(),
   supplier (_supplier),
@@ -45,6 +33,18 @@ priv_queue::priv_queue (processor *_supplier) :
   synced (false),
   lock_depth(0)
 {
+}
+
+void
+priv_queue::lock(processor *client)
+{
+  if (lock_depth == 0)
+    {
+      supplier->qoq.push(qoq_item (client, this));
+      synced = false;
+    }
+
+  lock_depth++;
 }
 
 bool

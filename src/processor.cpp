@@ -55,7 +55,7 @@ processor::processor(spid_t _pid,
   if (!setjmp(exenv)) {
 
 void
-processor::try_call (std::shared_ptr<priv_queue> pq, call_data *call)
+processor::try_call (priv_queue *pq, call_data *call)
 {
   // This commented section slows down some benchmarks by 2x. I believe
   // this is due to either some locking in the allocation routines (again)
@@ -128,7 +128,7 @@ processor::operator()(call_data* call)
 }
 
 void
-processor::process_priv_queue(std::shared_ptr<priv_queue> pq)
+processor::process_priv_queue(priv_queue *pq)
 {
   for (;;)
     {

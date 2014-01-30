@@ -20,7 +20,6 @@
 
 #ifndef _PRIV_QUEUE_H
 #define _PRIV_QUEUE_H
-#include <memory>
 #include "eif_utils.hpp"
 #include "spsc.hpp"
 
@@ -46,6 +45,15 @@ public:
   // The lifetime end-point of this queue.
   processor *supplier;
   
+  /* Locks this private queue.
+   * @client the client of this locking operation
+   *
+   * This places this queue in the <supplier>s queue of queues <qoq>.
+   * Locking can be recursive, both for the owner and any recipients of
+   * lock passing.
+   */
+  void lock(processor *client);
+
   /* Logs a new call to the supplier.
    * @call the call to go to the supplier.
    *
@@ -111,21 +119,9 @@ public:
 
 private:
   call_data* call_stack_call;
-public:
   bool synced;
   int lock_depth;
-
 };
 
-/* Locks this private queue.
- * @pq the queue to send the lock request on
- * @client the client of this locking operation
- *
- * This places this queue in the <supplier>s queue of queues <qoq>.
- * Locking can be recursive, both for the owner and any recipients of
- * lock passing.
- */
-void
-queue_lock(std::shared_ptr<priv_queue> pq, processor *client);
 
 #endif // _PRIV_QUEUE_H

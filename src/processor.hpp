@@ -216,9 +216,9 @@ private:
    * @pq private queue to take the call from
    * @call the call to apply
    */
-  void try_call (std::shared_ptr<priv_queue> pq, call_data *call);
+  void try_call (priv_queue *pq, call_data *call);
 
-  void process_priv_queue(std::shared_ptr<priv_queue>);
+  void process_priv_queue(priv_queue*);
 
 };
 
