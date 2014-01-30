@@ -68,32 +68,8 @@ public:
    *
    * @return the queue ending at the supplier
    */
-  inline
   priv_queue*
-  operator[] (processor * const supplier)
-  {
-    const auto &found_it = queue_map.find (supplier);
-    priv_queue *pq;
-    if (found_it != queue_map.end())
-      {
-	auto &stack = found_it->second;
-	if (stack.empty())
-	  {
-	    stack.emplace_back (new priv_queue(supplier));
-	  }
-	pq = stack.back();
-      }
-    else
-      {
-	const auto &res = queue_map.emplace (supplier, queue_stack());
-	auto &stack = res.first->second;
-	stack.emplace_back (new priv_queue(supplier));
-	pq = stack.back();
-      }
-
-    return pq;
-  }
-
+  operator[] (processor * const supplier);
 
   /* Locked status.
    * @proc the supplier <processor> to query for lock acquisition
