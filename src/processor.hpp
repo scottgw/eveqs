@@ -41,25 +41,26 @@
  * of course it can only be used between a single receiver and sender
  * at one time.
  */
-struct notifier : spsc <call_data*> {
+struct notifier : spsc <sync_response> {
 
-  call_data* wait ()
+  sync_response wait ()
   {
-    call_data *result;
-    this->pop(result, 64);
-    return result;
+    sync_response response;
+    this->pop(response, 64);
+    return response;
   }
 
-  void wake (call_data *call = NULL)
+  void wake (processor* client = NULL, call_data *call = NULL)
   {
-    this->push(call);
+    this->push(sync_response(client, call));
   }
 
   void mark (marker_t mark)
   {
     auto mark_call =
-      [&](call_data* call)
+      [&](sync_response response)
       {
+	call_data *call = response.call;
         if (call)
           {
             mark_call_data (mark, call);
@@ -113,10 +114,11 @@ public:
   queue_cache cache;
 
   /* Process a call on this processor.
+   * @client the client of the call
    * @call the call to execute.
    */
   void
-  operator()(call_data* call);
+  operator()(processor *client, call_data* call);
 
 public:
   /* The queue of queues.
@@ -164,12 +166,6 @@ public:
    * processor, which may not have any references to it, from being collected.
    */
   bool has_client;
-
-  /* The currently executing call.
-   * 
-   * This will be traced during marking.
-   */
-  call_data* executing_call;
 
   /* Marks the processor's <priv_queues>
    * @mark The specific marking routine.
@@ -221,6 +217,13 @@ private:
   std::mutex cache_mutex;
 
 private:
+  /* The currently executing call.
+   * 
+   * This will be traced during marking.
+   */
+  sync_response current_response;
+
+
   /* A vacuous pointer object to satisfy the Eiffel runtime's requirement
    * for an object to be the "current" object for a thread.
    */
@@ -230,7 +233,7 @@ private:
    * @pq private queue to take the call from
    * @call the call to apply
    */
-  void try_call (priv_queue *pq, call_data *call);
+  bool try_call (call_data *call);
 
   void process_priv_queue(priv_queue*);
 

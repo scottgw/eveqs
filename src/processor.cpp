@@ -40,11 +40,11 @@ processor::processor(spid_t _pid,
   my_token (this),
   token_queue (),
   has_client (true),
-  executing_call (NULL),
   has_backing_thread (_has_backing_thread),
   pid(_pid),
   private_queue_cache(),
   cache_mutex(),
+  current_response (NULL),
   parent_obj (std::make_shared<std::nullptr_t>(nullptr))
 {
   active_count++;
@@ -65,74 +65,75 @@ processor::~processor()
   exvect->ex_jbuf = &exenv;   \
   if (!setjmp(exenv)) {
 
-void
-processor::try_call (priv_queue *pq, call_data *call)
+bool
+processor::try_call (call_data *call)
 {
   // This commented section slows down some benchmarks by 2x. I believe
   // this is due to either some locking in the allocation routines (again)
   // or reloading the thread local variables often.
 
-  // This is too slow (I think). Let's just memorize it once then reuse that.
+  // // This is too slow (I think). Let's just memorize it once then reuse that.
   // if (!globals)
   //   {
   //     GTCX;
   //     globals = eif_globals;
   //   }
 
-  // {
-  //   eif_global_context_t *eif_globals = globals;
+  {
+    GTCX;
+    // eif_global_context_t *eif_globals = globals;
 
-  //   EIF_REFERENCE EIF_VOLATILE saved_except = (EIF_REFERENCE) 0;
-  //   RTEX;
-  //   RTED;
-  //   RTEV;
-  //   RTE_T_QS;
-  //   eif_try_call (call_data);
-  //   RTE_E;
-  //   pq->dirty = true;
-  //   RTE_EE;
-  // }
+    EIF_REFERENCE EIF_VOLATILE saved_except = (EIF_REFERENCE) 0;
+    RTEX;
+    RTED;
+    RTEV;
+    RTE_T_QS;
+    eif_try_call (call);
+    return true;
+    RTE_E;
+    exvect = exret(exvect);
+    return false;
+    RTE_EE;
+  }
 
 
-  // This just shows that the jmp_buf isn't the bottle-neck: this is fast.
+  // // This just shows that the jmp_buf isn't the bottle-neck: this is fast.
 
-  jmp_buf buf;
+  // jmp_buf buf;
   
-  if (!setjmp(buf))
-    {
-      eif_try_call (call);
-    }
-  else
-    {
-      pq->dirty = true;
-    }
+  // if (!setjmp(buf))
+  //   {
+  //     eif_try_call (call);
+  //   }
+  // else
+  //   {
+  //     pq->dirty = true;
+  //   }
 }
 
 void
-processor::operator()(call_data* call)
+processor::operator()(processor *client, call_data* call)
 {
   spid_t sync_pid = call_data_sync_pid (call);
 
+  if (call_data_is_lock_passing (call))
+    {
+      cache.push (&client->cache);
+    }
+
+  if (!try_call (call))
+    {
+      // FIXME: handle the case of exceptions from the try_call
+    }
+
+  if (call_data_is_lock_passing (call))
+    {
+      cache.pop ();
+    }
+
   if (sync_pid != NULL_PROCESSOR_ID)
     {
-      processor *client = registry[sync_pid];
-
-      if (call_data_is_lock_passing (call))
-	{
-	  cache.push (&client->cache);
-	  try_call (NULL, call);
-	  cache.pop ();
-	}
-      else
-	{
-	  try_call (NULL, call);
-	}
-
       client->result_notify.wake();
-    }
-  else
-    {
-      try_call (NULL, call);
     }
 
   free (call);
@@ -143,16 +144,16 @@ processor::process_priv_queue(priv_queue *pq)
 {
   for (;;)
     {
-      pq->pop_call (executing_call);
+      pq->pop_call (current_response);
 
-      if (executing_call == NULL)
+      if (current_response.call == NULL)
         {
           return;
         }
 
-      (*this)(executing_call);
+      (*this)(current_response.client, current_response.call);
 
-      executing_call = NULL;
+      current_response.call = NULL;
     }
 }
 
@@ -253,9 +254,9 @@ processor::shutdown()
 void
 processor::mark(marker_t mark)
 {
-  if (executing_call)
+  if (current_response.call)
     {
-      mark_call_data (mark, executing_call);
+      mark_call_data (mark, current_response.call);
     }
 
   for (auto &pq : private_queue_cache)

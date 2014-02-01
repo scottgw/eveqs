@@ -95,12 +95,12 @@ extern "C"
       {
 	supplier->has_backing_thread = true;
 	pq->lock(client);
-	pq->log_call (call);
+	pq->log_call (client, call);
 	pq->unlock();
       }
     else if (client->cache.has_subordinate (supplier))
       {
-	supplier->result_notify.wake (call);
+	supplier->result_notify.wake (client, call);
 	if (call_data_sync_pid (call) != NULL_PROCESSOR_ID)
 	  {
 	    client->result_notify.wait();
@@ -108,7 +108,7 @@ extern "C"
       }
     else
       {
-	pq->log_call (call);
+	pq->log_call (client, call);
       }
   }
 

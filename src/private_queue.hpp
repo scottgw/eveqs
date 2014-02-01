@@ -25,13 +25,30 @@
 
 class processor;
 
+struct sync_response
+{
+  sync_response(processor* client = NULL, call_data* call = NULL) :
+    client (client),
+    call (call)
+  {
+  }
+  
+  bool is_callback ()
+  {
+    return client != NULL;
+  }
+
+  processor* client;
+  call_data* call;
+};
+
 /* The private queue class.
  *
  * This structure functions as a lock between the client and the supplier.
  * The client is the original client, as this queue may be passed to
  * other clients during lock-passing.
  */
-class priv_queue : spsc <call_data*>
+class priv_queue : spsc <sync_response>
 {
 public:
   /* Construct a private queue.
@@ -55,13 +72,14 @@ public:
   void lock(processor *client);
 
   /* Logs a new call to the supplier.
+   * @client the client of the call
    * @call the call to go to the supplier.
    *
    * This is essentially an enqueue operation on the underlying 
    * concurrent queue, waking the supplier if it was waiting on this
    * queue for more calls.
    */
-  void log_call(call_data *call);
+  void log_call(processor *client, call_data *call);
 
   /* Receive a new call.
    * @call will contain the calla fter the return of the function.
@@ -70,7 +88,7 @@ public:
    * (**or** some processor that the client has passed its locks to).
    * This is a blocking call if no call data is available.
    */
-  void pop_call (call_data *& call)
+  void pop_call (sync_response &call)
   {
     pop (call);
   }
@@ -118,7 +136,7 @@ public:
   void mark (marker_t mark);
 
 private:
-  call_data* call_stack_call;
+  sync_response call_stack_response;
   bool synced;
   int lock_depth;
 };

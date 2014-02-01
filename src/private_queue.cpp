@@ -26,10 +26,10 @@
 #include "eif_utils.hpp"
 
 priv_queue::priv_queue (processor *_supplier) :
-  spsc<call_data*>(),
+  spsc<sync_response>(),
   supplier (_supplier),
   dirty (false),
-  call_stack_call(NULL),
+  call_stack_response(),
   synced (false),
   lock_depth(0)
 {
@@ -67,23 +67,31 @@ priv_queue::register_wait(processor *client)
 }
 
 void
-priv_queue::log_call(call_data *call)
+priv_queue::log_call(processor *client, call_data *call)
 {
   bool will_sync = call_data_sync_pid (call) != NULL_PROCESSOR_ID;
 
-  push (call);
+  push (sync_response (client, call));
 
   if (will_sync)
     {
       processor *client = registry[call_data_sync_pid (call)];
 
-      // If this client has received a non-NULL response as a wake-up, then
-      // it is someone with our call-stack lock giving us more work.
-      while ((call_stack_call = client->result_notify.wait()))
+      sync_response response = client->result_notify.wait();
+
+      for (;
+	   response.is_callback();
+	   call_stack_response = client->result_notify.wait())
 	{
-	  (*client)(call_stack_call);
-	  call_stack_call = NULL;
+	  (*client)(response.client, response.call);
 	}
+      // // If this client has received a non-NULL response as a wake-up, then
+      // // it is someone with our call-stack lock giving us more work.
+      // while ((call_stack_call = client->result_notify.wait()))
+      // 	{
+      // 	  (*client)(call_stack_call);
+      // 	  call_stack_call = NULL;
+      // 	}
     }
 
   synced = will_sync;
@@ -105,8 +113,9 @@ void
 priv_queue::mark(marker_t mark)
 {
   auto mark_call =
-    [&](call_data* call)
+    [&](sync_response response)
       {
+	call_data* call = response.call;
         if (call)
           {
             mark_call_data (mark, call);
@@ -114,8 +123,8 @@ priv_queue::mark(marker_t mark)
       };
   unsafe_map_ (mark_call);
 
-  if (call_stack_call)
+  if (call_stack_response.call)
     {
-      mark_call_data (mark, call_stack_call);
+      mark_call_data (mark, call_stack_response.call);
     }
 }
