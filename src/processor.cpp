@@ -44,7 +44,8 @@ processor::processor(spid_t _pid,
   pid(_pid),
   private_queue_cache(),
   cache_mutex(),
-  current_response (NULL),
+  dirty_for_set(),
+  current_msg (),
   parent_obj (std::make_shared<std::nullptr_t>(nullptr))
 {
   active_count++;
@@ -121,9 +122,10 @@ processor::operator()(processor *client, call_data* call)
       cache.push (&client->cache);
     }
 
-  if (!try_call (call))
+  bool successful_call = try_call (call);
+  if (!successful_call)
     {
-      // FIXME: handle the case of exceptions from the try_call
+      dirty_for_set.insert (client);
     }
 
   if (call_data_is_lock_passing (call))
@@ -133,7 +135,17 @@ processor::operator()(processor *client, call_data* call)
 
   if (sync_pid != NULL_PROCESSOR_ID)
     {
-      client->result_notify.wake();
+      auto it = dirty_for_set.find (client);
+
+      if (it != dirty_for_set.end())
+	{
+	  client->result_notify.rude_awake();
+	  dirty_for_set.erase (it);
+	}
+      else
+	{
+	  client->result_notify.result_awake();
+	}
     }
 
   free (call);
@@ -144,16 +156,16 @@ processor::process_priv_queue(priv_queue *pq)
 {
   for (;;)
     {
-      pq->pop_call (current_response);
+      pq->pop_msg (current_msg);
 
-      if (current_response.call == NULL)
+      if (current_msg.call == NULL)
         {
           return;
         }
 
-      (*this)(current_response.client, current_response.call);
+      (*this)(current_msg.client, current_msg.call);
 
-      current_response.call = NULL;
+      current_msg.call = NULL;
     }
 }
 
@@ -164,7 +176,7 @@ spawn_main(char* data, spid_t pid)
   processor *proc = registry [pid];
   (void)data;
 
-  proc->startup_notify.wake();
+  proc->startup_notify.result_awake();
   proc->application_loop();
   registry.return_processor (proc);
 }
@@ -250,13 +262,12 @@ processor::shutdown()
   qoq.push (qoq_item());
 }
 
-
 void
 processor::mark(marker_t mark)
 {
-  if (current_response.call)
+  if (current_msg.call)
     {
-      mark_call_data (mark, current_response.call);
+      mark_call_data (mark, current_msg.call);
     }
 
   for (auto &pq : private_queue_cache)

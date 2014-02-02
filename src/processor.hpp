@@ -41,26 +41,58 @@
  * of course it can only be used between a single receiver and sender
  * at one time.
  */
-struct notifier : spsc <sync_response> {
+struct notifier : spsc <notify_message> {
 
-  sync_response wait ()
+  /* Wait for a new notification
+   */
+  notify_message wait ()
   {
-    sync_response response;
-    this->pop(response, 64);
-    return response;
+    notify_message msg;
+    this->pop(msg, 64);
+    return msg;
   }
 
-  void wake (processor* client = NULL, call_data *call = NULL)
+  /* Awaken the waiter rudely.
+   *
+   * Here, rudely means that the supplier of the current query is
+   * now dirty.
+   */
+  void rude_awake()
   {
-    this->push(sync_response(client, call));
+    this->push(notify_message(notify_message::e_dirty));
   }
 
+  /* Regular (non-callback, non-rude) wakeup.
+   *
+   * This wakeup is for results, for example.
+   */
+  void result_awake ()
+  {
+    this->push(notify_message());
+  }
+
+  /* A callback wakeup.
+   *
+   * This means that the waiting is due to lock passing, and this is
+   * actually a call from one of the suppliers that we passed our
+   * callstack to.
+   */
+  void callback_awake (processor* client, call_data *call)
+  {
+    this->push(notify_message(notify_message::e_callback, client, call));
+  }
+
+  /* Mark this queue.
+   *
+   * This queue may contain calls (for callbacks), so we have to be able
+   * to mark it.
+   */
   void mark (marker_t mark)
   {
     auto mark_call =
-      [&](sync_response response)
+      [&](notify_message msg)
       {
-	call_data *call = response.call;
+	call_data *call = msg.call;
         if (call)
           {
             mark_call_data (mark, call);
@@ -217,11 +249,15 @@ private:
   std::mutex cache_mutex;
 
 private:
-  /* The currently executing call.
-   * 
-   * This will be traced during marking.
+  /* Clients that we have to notify that we didn't do what they wanted.
    */
-  sync_response current_response;
+  std::set<processor*> dirty_for_set;
+
+  /* The current message we have.
+   * 
+   * This call in here will be traced during marking.
+   */
+  pq_message current_msg;
 
 
   /* A vacuous pointer object to satisfy the Eiffel runtime's requirement

@@ -26,10 +26,10 @@
 #include "eif_utils.hpp"
 
 priv_queue::priv_queue (processor *_supplier) :
-  spsc<sync_response>(),
+  spsc<pq_message>(),
   supplier (_supplier),
   dirty (false),
-  call_stack_response(),
+  call_stack_msg(),
   synced (false),
   lock_depth(0)
 {
@@ -71,27 +71,27 @@ priv_queue::log_call(processor *client, call_data *call)
 {
   bool will_sync = call_data_sync_pid (call) != NULL_PROCESSOR_ID;
 
-  push (sync_response (client, call));
+  push (pq_message (pq_message::e_normal, client, call));
 
   if (will_sync)
     {
       processor *client = registry[call_data_sync_pid (call)];
 
-      sync_response response = client->result_notify.wait();
+      call_stack_msg = client->result_notify.wait();
 
       for (;
-	   response.is_callback();
-	   call_stack_response = client->result_notify.wait())
+	   call_stack_msg.type == notify_message::e_callback;
+	   call_stack_msg = client->result_notify.wait())
 	{
-	  (*client)(response.client, response.call);
+	  (*client)(call_stack_msg.client, call_stack_msg.call);
+	  call_stack_msg.call = NULL;
 	}
-      // // If this client has received a non-NULL response as a wake-up, then
-      // // it is someone with our call-stack lock giving us more work.
-      // while ((call_stack_call = client->result_notify.wait()))
-      // 	{
-      // 	  (*client)(call_stack_call);
-      // 	  call_stack_call = NULL;
-      // 	}
+
+      if (call_stack_msg.type == notify_message::e_dirty)
+	{
+	  char *msg = "EVE/Qs dirty processor exception";
+	  eraise (msg, 32);
+	}
     }
 
   synced = will_sync;
@@ -104,7 +104,7 @@ priv_queue::unlock()
 
   if (lock_depth == 0)
     {
-      push (NULL);
+      push (pq_message (pq_message::e_unlock));
       synced = false;
     }
 }
@@ -113,9 +113,9 @@ void
 priv_queue::mark(marker_t mark)
 {
   auto mark_call =
-    [&](sync_response response)
+    [&](pq_message msg)
       {
-	call_data* call = response.call;
+	call_data* call = msg.call;
         if (call)
           {
             mark_call_data (mark, call);
@@ -123,8 +123,8 @@ priv_queue::mark(marker_t mark)
       };
   unsafe_map_ (mark_call);
 
-  if (call_stack_response.call)
+  if (call_stack_msg.call)
     {
-      mark_call_data (mark, call_stack_response.call);
+      mark_call_data (mark, call_stack_msg.call);
     }
 }

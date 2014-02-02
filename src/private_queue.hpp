@@ -25,22 +25,51 @@
 
 class processor;
 
-struct sync_response
+struct notify_message
 {
-  sync_response(processor* client = NULL, call_data* call = NULL) :
+  typedef enum {
+    e_result_ready,
+    e_dirty,
+    e_callback
+  } e_type;
+
+  notify_message(e_type type = e_result_ready,
+		 processor* client = NULL,
+		 call_data* call = NULL) :
     client (client),
-    call (call)
+    call (call),
+    type (type)
   {
-  }
-  
-  bool is_callback ()
-  {
-    return client != NULL;
   }
 
   processor* client;
   call_data* call;
+  e_type type;
 };
+
+
+
+struct pq_message
+{
+  typedef enum {
+    e_normal,
+    e_unlock
+  } e_type;
+
+  pq_message(e_type type = e_normal,
+	     processor* client = NULL,
+	     call_data* call = NULL) :
+    client (client),
+    call (call),
+    type (type)
+  {
+  }
+
+  processor* client;
+  call_data* call;
+  e_type type;
+};
+
 
 /* The private queue class.
  *
@@ -48,7 +77,7 @@ struct sync_response
  * The client is the original client, as this queue may be passed to
  * other clients during lock-passing.
  */
-class priv_queue : spsc <sync_response>
+class priv_queue : spsc <pq_message>
 {
 public:
   /* Construct a private queue.
@@ -88,9 +117,9 @@ public:
    * (**or** some processor that the client has passed its locks to).
    * This is a blocking call if no call data is available.
    */
-  void pop_call (sync_response &call)
+  void pop_msg (pq_message &msg)
   {
-    pop (call);
+    pop (msg);
   }
 
   /* Register a wait operation with the <supplier>.
@@ -136,7 +165,7 @@ public:
   void mark (marker_t mark);
 
 private:
-  sync_response call_stack_response;
+  notify_message call_stack_msg;
   bool synced;
   int lock_depth;
 };

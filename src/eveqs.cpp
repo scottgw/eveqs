@@ -100,7 +100,7 @@ extern "C"
       }
     else if (client->cache.has_subordinate (supplier))
       {
-	supplier->result_notify.wake (client, call);
+	supplier->result_notify.callback_awake (client, call);
 	if (call_data_sync_pid (call) != NULL_PROCESSOR_ID)
 	  {
 	    client->result_notify.wait();
