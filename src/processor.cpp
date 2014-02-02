@@ -59,57 +59,59 @@ processor::~processor()
     }
 }
 
-
-// This is a modified RTE_T with no `start' label
-#define RTE_T_QS              \
-  saved_except = RTLA;        \
-  exvect->ex_jbuf = &exenv;   \
-  if (!setjmp(exenv)) {
-
 bool
 processor::try_call (call_data *call)
 {
-  // This commented section slows down some benchmarks by 2x. I believe
-  // this is due to either some locking in the allocation routines (again)
-  // or reloading the thread local variables often.
+  if (false) // Switch this on to catch exceptions
+    {
+      // This section slows down some benchmarks by 2x. I believe
+      // this is due to either some locking in the allocation routines (again)
+      // or reloading the thread local variables often.
+      bool success;
+      GTCX;
+      // eif_global_context_t *eif_globals = globals;
+      struct ex_vect * EIF_VOLATILE exvect;
+      EIF_REFERENCE EIF_VOLATILE saved_except = 0;
+      jmp_buf exenv;
 
-  // // This is too slow (I think). Let's just memorize it once then reuse that.
-  // if (!globals)
-  //   {
-  //     GTCX;
-  //     globals = eif_globals;
-  //   }
+      RTXD;
+      RTXI(0);
 
-  {
-    GTCX;
-    // eif_global_context_t *eif_globals = globals;
+      exvect = exft();
 
-    EIF_REFERENCE EIF_VOLATILE saved_except = (EIF_REFERENCE) 0;
-    RTEX;
-    RTED;
-    RTEV;
-    RTE_T_QS;
-    eif_try_call (call);
-    return true;
-    RTE_E;
-    exvect = exret(exvect);
-    return false;
-    RTE_EE;
-  }
+      saved_except = RTLA;
+      exvect->ex_jbuf = &exenv;
 
+      if (!setjmp(exenv))
+	{
+	  eif_try_call (call);
+	  success = true;
+	}
+      else
+	{
+	  exvect = exret(exvect);
+	  success = false;
+	}
+      set_last_exception (saved_except);
 
-  // // This just shows that the jmp_buf isn't the bottle-neck: this is fast.
-
-  // jmp_buf buf;
-  
-  // if (!setjmp(buf))
-  //   {
-  //     eif_try_call (call);
-  //   }
-  // else
-  //   {
-  //     pq->dirty = true;
-  //   }
+      exok();
+      RTXE;
+      return success;
+    }
+  else
+    {
+      // This just shows that the jmp_buf isn't the bottle-neck: this is fast.
+      jmp_buf buf;
+      if (!setjmp(buf))
+	{
+	  eif_try_call (call);
+	  return true;
+	}
+      else
+	{
+	  return false;
+	}
+    }
 }
 
 void
